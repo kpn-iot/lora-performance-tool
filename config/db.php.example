@@ -1,0 +1,12 @@
+<?php
+
+return [
+    'class' => 'yii\db\Connection',
+    'dsn' => 'mysql:host=DBHOST;dbname=DBNAME',
+    'username' => 'DBUSER',
+    'password' => 'DBPASS',
+    'charset' => 'utf8mb4',
+    'enableSchemaCache' => true,
+    'schemaCacheDuration' => 3600,
+    'schemaCache' => 'cache'
+];

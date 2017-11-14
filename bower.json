@@ -1,0 +1,16 @@
+{
+  "name": "performance-tool",
+  "authors": [
+    "Paul Marcelis <paul.marcelis@kpn.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "GPL-3.0",
+  "homepage": "",
+  "dependencies": {
+    "angular-google-chart": "^0.1.0",
+    "ngstorage": "^0.3.11",
+    "angular": "^1.5.8",
+    "ui-leaflet": "^2.0.0"
+  }
+}

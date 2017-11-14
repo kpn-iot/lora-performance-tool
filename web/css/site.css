@@ -1,0 +1,48 @@
+/*  _  __  ____    _   _ 
+ * | |/ / |  _ \  | \ | |
+ * | ' /  | |_) | |  \| |
+ * | . \  |  __/  | |\  |
+ * |_|\_\ |_|     |_| \_|
+ * 
+ * (c) 2017 KPN
+ * License: GNU General Public License v3.0
+ * Author: Paul Marcelis
+ * 
+ */
+
+/* General */
+body {
+  font-family: 'open sans', calibri, sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  padding-bottom:50px;
+}
+
+main {
+  padding-top:50px;
+}
+
+.page-header {
+  margin-top:20px;
+}
+.page-header > * {
+  margin-top:0;
+}
+
+/* Elements */
+.jumbotron {
+  text-align: center;
+  background-color: transparent;
+}
+
+.jumbotron .btn {
+  font-size: 21px;
+  padding: 14px 24px;
+}
+
+.catcher {
+  text-shadow:1px 1px 1px rgba(0,0,0,0.1);
+  box-shadow: 0px 0px 4px 2px rgba(0,0,0,0.1) inset;
+  background-color:#EBEBEB;
+  margin-bottom:15px;
+}

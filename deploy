@@ -1,0 +1,7 @@
+git pull
+
+composer install
+bower install
+
+./yii migrate --interactive=0
+./yii cache/flush-all
