@@ -201,7 +201,7 @@ class GatewaysController extends Controller {
         $operation['action'] = 'create'; //create
       } elseif ($operation['current']->deleted_at !== null) { //if current record deleted
         $operation['action'] = 'revive'; //revive it
-      } elseif ($operation['current']->latitude == null || $operation['current']->longitude == null) { //if current record incorrect location
+      } elseif (($operation['current']->latitude == null || $operation['current']->longitude == null) && $operation['new']['latitude'] !== null && $operation['new']['longitude'] !== null) { //if current record incorrect location
         $operation['action'] = 'update'; //update it
       } elseif ($operation['new']['latitude'] != null && $operation['new']['longitude'] != null) { //if new record also has a location
         $distance = Calc::coordinateDistance($operation['current']->latitude, $operation['current']->longitude, $operation['new']['latitude'], $operation['new']['longitude']);

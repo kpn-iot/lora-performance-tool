@@ -40,7 +40,7 @@ if (!Yii::$app->user->isGuest) {
           ['label' => 'Session Sets', 'url' => ['/session-sets']],
           ['label' => 'Sessions', 'url' => ['/sessions']],
           ['label' => 'Frames', 'url' => ['/frames']],
-          ['label' => 'Report', 'url' => ['/report']]
+          ['label' => 'GeoLoc Report', 'url' => ['/report']]
         ]
       ],
       ['label' => 'Quick measurements', 'url' => ['/quick/index']],
@@ -60,15 +60,6 @@ if (!Yii::$app->user->isGuest) {
     'options' => ['class' => 'navbar-nav navbar-right'],
     'items' => [
       ['label' => 'Logout', 'url' => ['/site/logout']]
-    ]
-  ]);
-} else {
-  echo Nav::widget([
-    'options' => ['class' => 'navbar-nav'],
-    'items' => [
-      ['label' => 'Key generation', 'url' => ['/site/keys']],
-      ['label' => 'HEX tooling', 'url' => ['/site/hex']],
-      ['label' => 'Thingpark device import', 'url' => ['/site/thingpark-import']]
     ]
   ]);
 }

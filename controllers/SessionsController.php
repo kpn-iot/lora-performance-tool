@@ -74,7 +74,10 @@ class SessionsController extends Controller {
         'searchModel' => $searchModel,
         'dataProvider' => $dataProvider,
         'model' => ($device_id != null) ? Device::findOne($device_id) : null,
-        'devicesFilter' => $devicesFilter
+        'devicesFilter' => $devicesFilter,
+        'sessionSets' => array_map(function($item) {
+            return $item->name;
+          }, SessionSet::find()->orderBy(['name' => SORT_ASC])->indexBy('id')->all())
     ]);
   }
 

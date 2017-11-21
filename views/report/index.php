@@ -19,10 +19,10 @@ use app\components\data\Decoding;
 
 /* @var $this yii\web\View */
 /* @var $sessionSearchModel app\models\SessionSearch */
-/* @var $dataProvider yii\data\ActiveDataProvider */
+/* @var $sessionProvider yii\data\ActiveDataProvider */
 /* @var $frameCollection app\models\lora\FrameCollection */
 
-$this->title = 'Report';
+$this->title = 'GeoLoc Report';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
@@ -32,6 +32,9 @@ $form = ActiveForm::begin([
     'method' => 'get',
   ]);
 ?>
+<div class="alert alert-info">
+  The report filters by default on the last 14 days and for frames received by at least 3 gateways. The graphs are not interactive in favor of performance of this web page.
+</div>
 <div class="row">
 
   <div class="col-xs-6 col-md-3">
@@ -61,10 +64,10 @@ $form = ActiveForm::begin([
     <label>Frame received range</label>
     <div class="row">
       <div class="col-xs-6">
-        <?= $form->field($frameSearchModel, 'createdAtMin')->input('datetime-local')->hint('dd-mm-yyyy hh:mm')->label(false) ?>
+        <?= $form->field($frameSearchModel, 'createdAtMin')->hint('dd-mm-yyyy hh:mm')->label(false) ?>
       </div>
       <div class="col-xs-6">
-        <?= $form->field($frameSearchModel, 'createdAtMax')->input('datetime-local')->label(false) ?>
+        <?= $form->field($frameSearchModel, 'createdAtMax')->label(false) ?>
       </div>
       <div class="col-xs-12">
         <?= $form->field($frameSearchModel, 'sf')->checkboxList([7 => 'SF7', 8 => 'SF8', 9 => 'SF9', 10 => 'SF10', 11 => 'SF11', 12 => 'SF12']) ?>
@@ -118,7 +121,7 @@ $info = [
       return $ret;
     }
   ],
-  ['Nr frames', Yii::$app->formatter->asInteger($frameProvider->count()), true],
+  ['Nr frames', Yii::$app->formatter->asInteger($frameProvider->count()), true]
 ];
 ?>
 
@@ -160,106 +163,112 @@ $info = [
 <?php endif ?>
 
 <?php if ($frameCollection !== null): ?>
-  <?= $this->render('/_partials/geoloc-pdf-cdf-graphs', ['stats' => $frameCollection->geoloc]) ?>
+  <?= $this->render('/_partials/geoloc-pdf-cdf-graphs', ['stats' => $frameCollection->geoloc, 'makePNG' => true]) ?>
 <?php endif ?>
 
 
 </div>
 <div class="container-fluid">
-
-  <?=
-  GridView::widget([
-    'dataProvider' => $dataProvider,
-    'columns' => [
-      'id',
-      [
-        'label' => 'Device',
-        'attribute' => 'device_id',
-        'format' => 'raw',
-        'value' => function ($data) {
-          return $data->device->name;
-        }
-      ],
-      [
-        'attribute' => 'description',
-        'format' => 'raw',
-        'value' => function ($data) {
-          return $data->name;
-        }
-      ],
-      [
-        'attribute' => 'frr',
-        'headerOptions' => [
-          'class' => 'text-right'
+  <?php
+  if ($sessionProvider !== null) {
+    echo GridView::widget([
+      'dataProvider' => $sessionProvider,
+      'columns' => [
+        [
+          'label' => 'Device',
+          'attribute' => 'device_id',
+          'format' => 'raw',
+          'value' => function ($data) {
+            return $data->device->name;
+          }
         ],
-        'contentOptions' => [
-          'class' => 'text-right'
-        ]
-      ],
-      [
-        'attribute' => 'locSolveAccuracy',
-        'headerOptions' => [
-          'class' => 'text-right'
+        [
+          'attribute' => 'type',
+          'filter' => ['moving' => 'Moving', 'static' => 'Static'],
+          'value' => 'typeIcon',
+          'format' => 'raw'
         ],
-        'contentOptions' => [
-          'class' => 'text-right'
-        ]
-      ],
-      [
-        'attribute' => 'locSolveSuccess',
-        'headerOptions' => [
-          'class' => 'text-right'
+        [
+          'attribute' => 'description',
+          'format' => 'raw',
+          'value' => function ($data) {
+            return Html::a($data->name, ['/sessions/report-geoloc', 'id' => $data->id], ['target' => '_blank']);
+          }
         ],
-        'contentOptions' => [
-          'class' => 'text-right'
-        ]
-      ],
-      [
-        'attribute' => 'frrRel',
-        'headerOptions' => [
-          'class' => 'text-right'
+        [
+          'attribute' => 'frr',
+          'headerOptions' => [
+            'class' => 'text-right'
+          ],
+          'contentOptions' => [
+            'class' => 'text-right'
+          ]
         ],
-        'contentOptions' => [
-          'class' => 'text-right'
-        ]
-      ],
-      [
-        'attribute' => 'runtime',
-        'headerOptions' => [
-          'class' => 'text-right'
+        [
+          'attribute' => 'locSolveAccuracy',
+          'headerOptions' => [
+            'class' => 'text-right'
+          ],
+          'contentOptions' => [
+            'class' => 'text-right'
+          ]
         ],
-        'contentOptions' => [
-          'class' => 'text-right'
-        ]
-      ],
-      [
-        'label' => 'First frame',
-        'attribute' => 'firstFrame.created_at',
-        'format' => 'raw',
-        'value' => function ($data) {
-          return Yii::$app->formatter->asDatetime($data->firstFrame->created_at) .
-            Html::tag('br') .
-            Html::tag('i', Yii::$app->formatter->asTimeago($data->firstFrame->created_at));
-        },
-        'headerOptions' => [
-          'style' => 'width:160px'
-        ]
-      ],
-      [
-        'label' => 'Last frame',
-        'attribute' => 'lastActivity',
-        'format' => 'raw',
-        'value' => function ($data) {
-          return Yii::$app->formatter->asDatetime($data->lastFrame->created_at) .
-            Html::tag('br') .
-            Html::tag('i', Yii::$app->formatter->asTimeago($data->lastFrame->created_at));
-        },
-        'headerOptions' => [
-          'style' => 'width:160px'
+        [
+          'attribute' => 'locSolveSuccess',
+          'headerOptions' => [
+            'class' => 'text-right'
+          ],
+          'contentOptions' => [
+            'class' => 'text-right'
+          ]
+        ],
+        [
+          'attribute' => 'frrRel',
+          'headerOptions' => [
+            'class' => 'text-right'
+          ],
+          'contentOptions' => [
+            'class' => 'text-right'
+          ]
+        ],
+        [
+          'attribute' => 'runtime',
+          'headerOptions' => [
+            'class' => 'text-right'
+          ],
+          'contentOptions' => [
+            'class' => 'text-right'
+          ]
+        ],
+        [
+          'label' => 'First frame',
+          'attribute' => 'firstFrame.created_at',
+          'format' => 'raw',
+          'value' => function ($data) {
+            return Yii::$app->formatter->asDatetime($data->firstFrame->created_at) .
+              Html::tag('br') .
+              Html::tag('i', Yii::$app->formatter->asTimeago($data->firstFrame->created_at));
+          },
+          'headerOptions' => [
+            'style' => 'width:160px'
+          ]
+        ],
+        [
+          'label' => 'Last frame',
+          'attribute' => 'lastActivity',
+          'format' => 'raw',
+          'value' => function ($data) {
+            return Yii::$app->formatter->asDatetime($data->lastFrame->created_at) .
+              Html::tag('br') .
+              Html::tag('i', Yii::$app->formatter->asTimeago($data->lastFrame->created_at));
+          },
+          'headerOptions' => [
+            'style' => 'width:160px'
+          ]
         ]
       ]
-    ]
-  ]);
+    ]);
+  }
   ?>
 </div>
 <div class="container">

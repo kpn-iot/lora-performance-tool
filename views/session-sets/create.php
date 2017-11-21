@@ -19,6 +19,9 @@ $this->params['breadcrumbs'][] = ['label' => 'Session Sets', 'url' => ['index']]
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="session-set-create">
+  <?php if ($nrNewSessions): ?>
+  <div class="alert alert-info">When creating this session set, <?= $nrNewSessions ?> sessions will be added.</div>
+  <?php endif ?>
 
   <?=
   $this->render('_form', [

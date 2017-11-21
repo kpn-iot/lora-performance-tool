@@ -77,7 +77,7 @@ AngularAsset::register($this);
       $scope.select = {
         device: $scope.devices[0],
         payload: "00",
-        offset: "-7200"
+        offset: "0"
       };
       $scope.log = [];
 

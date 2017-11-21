@@ -13,6 +13,10 @@
 
 /* @var $this yii\web\View */
 /* @var $stats \app\components\GeolocStats */
+
+if (!isset($makePNG)) {
+  $makePNG = false;
+}
 ?>
 <?php if ($stats->nrMeasurements === 0): ?>
   <div class="alert alert-danger text-center hidden-print">
@@ -20,7 +24,12 @@
   </div>
 <?php else: ?>
   <h3>Average GeoLoc accuracy: <?= Yii::$app->formatter->asDecimal($stats->average, 1) ?>m 
-    <small><?= $stats->nrLocalisations ?> LocSolves, <?= Yii::$app->formatter->asDecimal($stats->percentageNrLocalisations * 100, 1) ?>%</small></h3>
+    <small>
+      <?= Yii::$app->formatter->asDecimal($stats->nrLocalisations, 0) ?> LocSolves - 
+      <?= Yii::$app->formatter->asDecimal($stats->percentageNrLocalisations * 100, 1) ?>% success - 
+      90% under <?= Yii::$app->formatter->asDecimal($stats->perc90point, 1) ?>m
+    </small>
+  </h3>
   <script>
     google.charts.load('current', {packages: ['corechart', 'bar']});
     google.charts.setOnLoadCallback(drawGraphs);
@@ -77,6 +86,13 @@
 
       var pdfChartDiv = document.getElementById('pdf_graph');
       var pdfChart = new google.visualization.ColumnChart(pdfChartDiv);
+
+  <?php if ($makePNG): ?>
+        google.visualization.events.addListener(pdfChart, 'ready', function () {
+          pdfChartDiv.innerHTML = '<img src="' + pdfChart.getImageURI() + '">';
+        });
+  <?php endif ?>
+
       pdfChart.draw(pdfData, pdfOptions);
 
 
@@ -92,6 +108,13 @@
 
       var cdfChartDiv = document.getElementById('cdf_graph');
       var cdfChart = new google.visualization.LineChart(cdfChartDiv);
+
+  <?php if ($makePNG): ?>
+        google.visualization.events.addListener(cdfChart, 'ready', function () {
+          cdfChartDiv.innerHTML = '<img src="' + cdfChart.getImageURI() + '">';
+        });
+  <?php endif ?>
+
       cdfChart.draw(cdfData, cdfOptions);
     }
   </script>

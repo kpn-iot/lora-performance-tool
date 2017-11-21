@@ -44,6 +44,7 @@ class SessionSetLink extends ActiveRecord {
       [['created_at', 'updated_at'], 'safe'],
       [['session_id'], 'exist', 'skipOnError' => true, 'targetClass' => Session::className(), 'targetAttribute' => ['session_id' => 'id']],
       [['set_id'], 'exist', 'skipOnError' => true, 'targetClass' => SessionSet::className(), 'targetAttribute' => ['set_id' => 'id']],
+      [['set_id', 'session_id'], 'unique', 'targetAttribute' => ['set_id', 'session_id'], 'message' => 'There can only be one link between a set and a session.'],
     ];
   }
 

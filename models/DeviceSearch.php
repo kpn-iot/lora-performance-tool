@@ -47,11 +47,11 @@ class DeviceSearch extends Device {
       'port_id' => $this->port_id,
       'created_at' => $this->created_at,
       'updated_at' => $this->updated_at,
+      'payload_type' => $this->payload_type
     ]);
 
     $query->andFilterWhere(['like', 'name', $this->name])
       ->andFilterWhere(['like', 'device_eui', $this->device_eui])
-      ->andFilterWhere(['like', 'payload_type', $this->payload_type])
       ->andFilterWhere(['like', 'as_id', $this->as_id])
       ->andFilterWhere(['like', 'lrc_as_key', $this->lrc_as_key])
       ->andFilterWhere(['like', 'description', $this->description]);

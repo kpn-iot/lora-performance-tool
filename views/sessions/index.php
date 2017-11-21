@@ -31,6 +31,9 @@ if ($model != null) {
 $this->params['breadcrumbs'][] = 'Sessions';
 
 $columns = [
+  [
+    'class' => 'yii\grid\CheckboxColumn'
+  ],
   'id',
   [
     'label' => 'Device',
@@ -175,16 +178,55 @@ $columns = [
   });
 </script>
 <p class="lead">
-  Explanation of the icons in the action column: <?= Html::icon('modal-window') ?> is to get a map preview of the session. <?= Html::icon('map-marker') ?> is to go to map view. <?= Html::icon('eye-open') ?> is to view the report. <?= Html::icon('pencil') ?> is to edit the session properties. <?= Html::icon('resize-full') ?> is to split the session. <?= Html::icon('trash') ?> is to remove the session.
+  Explanation of the icons in the action column: <?= Html::icon('modal-window') ?> is to get a map preview of the session. <?= Html::icon('stats') ?> is to view the coverage report. <?= Html::icon('equalizer') ?> is to view the geoloc report. <?= Html::icon('map-marker') ?> is to go to map view. <?= Html::icon('pencil') ?> is to edit the session properties. <?= Html::icon('resize-full') ?> is to split the session. <?= Html::icon('trash') ?> is to remove the session.
 </p>
 <p>
   You can generate a report of multiple sessions by editing the url manually to the following: <code><?= str_replace('100', '[sessionid1].[sessionid2].(etc)', Url::to(['report-coverage', 'id' => 100], true)) ?></code>. The session id can be found in the left column of the table below.
 </p>
+<form class="form-inline" onsubmit="save()">
+  <div class="input-group">
+    <?= Html::dropDownList('session-set', null, $sessionSets, ['class' => 'form-control', 'prompt' => '- New session set - ', 'id' => 'session-set']) ?>
+    <div class="input-group-btn">
+      <button class="btn btn-default" onclick="save()">Put selected sessions in session set</button>
+    </div>
+  </div>
+  <span id="response"></span>
+</form>
+<br />
+<script>
+  function save() {
+    event.preventDefault();
+    var ids = $('#grid').yiiGridView('getSelectedRows');
+    $("#response").text('');
+    if (ids.length === 0) {
+      $("#response").text('No sessions selected');
+      saveDone();
+      return;
+    }
+    var urlCreate = "<?= Url::to(['/session-sets/create', 'session_ids' => 'HERE']) ?>";
+    var urlUpdate = "<?= Url::to(['/session-sets/add-sessions', 'id' => 'WHAT', 'session_ids' => 'HERE']) ?>";
+    var sessionSetId = $("#session-set").val();
+    var url;
+    if (sessionSetId === '') {
+      url = urlCreate.replace("HERE", ids.join('.'));
+    } else {
+      url = urlUpdate.replace('WHAT', sessionSetId).replace("HERE", ids.join('.'));
+    }
+    window.location = url;
+  }
+  function saveDone() {
+    t = setTimeout(function () {
+      $("#response").text("");
+    }, 2500);
+    return true;
+  }
+</script>
 </div>
 <div class="container-fluid">
   <div class="table-responsive">
     <?=
     GridView::widget([
+      'id' => 'grid',
       'dataProvider' => $dataProvider,
       'filterModel' => $searchModel,
       'columns' => $columns

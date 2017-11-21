@@ -50,37 +50,40 @@ class ReportController extends Controller {
     $deviceSearchModel = new DeviceSearch();
 
     $deviceIds = array_map(function($data) {
-      return $data->id;
-    }, $deviceSearchModel->filter(Yii::$app->request->queryParams)->all());
-
+      return $data['id'];
+    }, $deviceSearchModel->filter(Yii::$app->request->queryParams)->asArray()->all());
+    
     $sessionSearchModel = new SessionSearch();
-    $sessionProvider = $sessionSearchModel->search(Yii::$app->request->queryParams, $deviceIds);
 
     $sessionIds = array_map(function($data) {
-      return $data->id;
-    }, $sessionSearchModel->filter(Yii::$app->request->queryParams)->all());
+      return $data['id'];
+    }, $sessionSearchModel->filter(Yii::$app->request->queryParams, $deviceIds)->asArray()->all());
 
     $frameSearchModel = new FrameSearch();
+    $frameSearchModel->createdAtMin = date('d-m-Y H:i', time()-(60*60*24*14));
+    $frameSearchModel->createdAtMax = date('d-m-Y H:i');
+    $frameSearchModel->gatewayCountMin = 3;
     $frameProvider = $frameSearchModel->filter(Yii::$app->request->queryParams, $sessionIds);
-    if ($frameProvider->count() < 50000) {
+    if ($frameProvider->count() < 50000 && $frameProvider->count() > 0) {
       $frames = $frameProvider->all();
       $frameCollection = new FrameCollection($frames);
 
       $sessionIds = [];
       foreach ($frames as $frame) {
-        if (!in_array($frame->session_id, $sessionIds)) {
-          $sessionIds[] = $frame->session_id;
+        if (!in_array($frame['session_id'], $sessionIds)) {
+          $sessionIds[] = $frame['session_id'];
         }
       }
       $sessionProvider = $sessionSearchModel->search(['SessionSearch' => ['idArray' => $sessionIds]]);
     } else {
       $frameCollection = null;
+      $sessionProvider = null;
     }
     return $this->render('index', [
         'deviceSearchModel' => $deviceSearchModel,
         'sessionSearchModel' => $sessionSearchModel,
         'frameSearchModel' => $frameSearchModel,
-        'dataProvider' => $sessionProvider,
+        'sessionProvider' => $sessionProvider,
         'frameProvider' => $frameProvider,
         'frameCollection' => $frameCollection
     ]);

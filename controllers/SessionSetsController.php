@@ -93,16 +93,50 @@ class SessionSetsController extends Controller {
    * If creation is successful, the browser will be redirected to the 'view' page.
    * @return mixed
    */
-  public function actionCreate() {
+  public function actionCreate($session_ids = null) {
     $model = new SessionSet();
+    if ($session_ids === null) {
+      $newSessionIds = null;
+    } else {
+      $newSessionIds = explode('.', $session_ids);
+    }
 
     if ($model->load(Yii::$app->request->post()) && $model->save()) {
+      if ($newSessionIds !== null) {
+        foreach ($newSessionIds as $sessionId) {
+          $link = new SessionSetLink();
+          $link->set_id = $model->id;
+          $link->session_id = $sessionId;
+          $link->save();
+        }
+      }
       return $this->redirect(['view', 'id' => $model->id]);
     } else {
       return $this->render('create', [
           'model' => $model,
+          'nrNewSessions' => ($newSessionIds === null) ? null : count($newSessionIds)
       ]);
     }
+  }
+
+  public function actionAddSessions($id, $session_ids = null) {
+    $model = $this->findModel($id);
+    if ($session_ids === null) {
+      $newSessionIds = null;
+    } else {
+      $newSessionIds = explode('.', $session_ids);
+      $success = 0;
+      foreach ($newSessionIds as $sessionId) {
+        $link = new SessionSetLink();
+        $link->set_id = $model->id;
+        $link->session_id = $sessionId;
+        if ($link->save()) {
+          $success += 1;
+        }
+      }
+      Yii::$app->session->addFlash('success', $success . ' sessions added to this set.');
+    }
+    return $this->redirect(['view', 'id' => $model->id]);
   }
 
   /**
@@ -145,7 +179,9 @@ class SessionSetsController extends Controller {
    * @return mixed
    */
   public function actionDelete($id) {
-    $this->findModel($id)->delete();
+    $model = $this->findModel($id);
+    SessionSetLink::deleteAll(['set_id' => $id]);
+    $model->delete();
 
     return $this->redirect(['index']);
   }

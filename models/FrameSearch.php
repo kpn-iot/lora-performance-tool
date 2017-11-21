@@ -58,8 +58,8 @@ class FrameSearch extends Frame {
     $query->andFilterWhere(['>=', 'gateway_count', $this->gatewayCountMin]);
     $query->andFilterWhere(['<=', 'gateway_count', $this->gatewayCountMax]);
 
-    $query->andFilterWhere(['>=', 'created_at', $this->createdAtMin]);
-    $query->andFilterWhere(['<=', 'created_at', $this->createdAtMax]);
+    $query->andFilterWhere(['>=', 'created_at', ($this->createdAtMin == null) ? null : date('Y-m-d H:i', strtotime($this->createdAtMin))]);
+    $query->andFilterWhere(['<=', 'created_at', ($this->createdAtMax == null) ? null : date('Y-m-d H:i', strtotime($this->createdAtMax))]);
 
     // grid filtering conditions
     $query->andFilterWhere([

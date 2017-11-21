@@ -24,29 +24,22 @@ use app\models\Frame;
  * @property array $pdf
  * @property array $cdf
  * @property array $timeGraphs
+ * @property integer $perc90point
  */
 class GeolocStats extends \yii\base\BaseObject {
 
-  private $_frameCollection;
-  private $_average, $_nrMeasurements, $_nrLocalisations, $_percentageNrLocalisations, $_pdf, $_cdf, $_timeGraphs;
+  private $_frameCollection, $_measurementFrames;
+  private $_average, $_nrMeasurements, $_nrLocalisations, $_percentageNrLocalisations, $_pdf = null, $_cdf = null, $_timeGraphs = null, $_perc90point = null;
 
   public function __construct(FrameCollection $frameCollection, $config = []) {
     $this->_frameCollection = $frameCollection;
-    $pdfBinValues = [50, 100, 150, 200, 250, 300];
-    $pdfBinSize = 100;
-    $pdfBinMax = 1500;
-    for ($i = end($pdfBinValues) + $pdfBinSize; $i <= $pdfBinMax; $i += $pdfBinSize) {
-      $pdfBinValues[] = $i;
-    }
-    $pdfBinValues[] = 1000000;
+    $this->_measurementFrames = [];
 
-    $pdfBins = [];
     $measurementCount = 0;
     $measurementSum = 0;
 
     $noNewLocalisationCount = 0;
     $localisationCount = 0;
-    $measurementFrames = [];
 
     foreach ($frameCollection->frames as $frame) {
       if ($frame['location_age_lora'] < Frame::$locationAgeThreshold) { // new localisation
@@ -63,22 +56,10 @@ class GeolocStats extends \yii\base\BaseObject {
       }
 
       // store frame with localisation and correct distance(accuracy in a separate array to be ordered for CDF)
-      $measurementFrames[] = $frame;
+      $this->_measurementFrames[] = $frame;
 
       $measurementCount += 1;
       $measurementSum += $frame['distance'];
-      $binNr = count($pdfBinValues) - 1;
-      foreach ($pdfBinValues as $nr => $bin) {
-        if ($frame['distance'] < $bin) {
-          $binNr = $nr;
-          break;
-        }
-      }
-
-      if (!isset($pdfBins[$binNr])) {
-        $pdfBins[$binNr] = 0;
-      }
-      $pdfBins[$binNr] += 1;
     }
 
     $this->_nrMeasurements = $measurementCount; //correct gps + correct geoloc
@@ -91,45 +72,10 @@ class GeolocStats extends \yii\base\BaseObject {
       return;
     }
 
-    // create pdf
-    $this->_pdf = [];
-    foreach ($pdfBinValues as $binId => $bin) {
-      if ($binId == 0) {
-        $label = '0-' . $bin . ' m';
-      } elseif ($binId == count($pdfBinValues) - 1) {
-        $label = $pdfBinValues[$binId - 1] . '+ m';
-      } else {
-        $label = $pdfBinValues[$binId - 1] . '-' . $bin . ' m';
-      }
-
-      $this->_pdf[$label] = (isset($pdfBins[$binId])) ? $pdfBins[$binId] : 0;
-    }
-
-    //create cdf
-    usort($measurementFrames, function($a, $b) {
+    usort($this->_measurementFrames, function($a, $b) {
       return $a['distance'] > $b['distance'];
     });
 
-    $this->_cdf = [
-      ['x' => 0, 'y' => 0]
-    ];
-    $cumsum = 0;
-    foreach ($measurementFrames as $frame) {
-      $this->_cdf[] = [
-        'x' => round($frame['distance'], 2),
-        'y' => $cumsum
-      ];
-
-      $cumsum += 1;
-
-      $this->_cdf[] = [
-        'x' => round($frame['distance'], 2),
-        'y' => $cumsum
-      ];
-    }
-    foreach ($this->_cdf as &$point) {
-      $point['y'] = (100 * $point['y']) / $cumsum;
-    }
 
     parent::__construct($config);
   }
@@ -181,11 +127,86 @@ class GeolocStats extends \yii\base\BaseObject {
   }
 
   public function getPdf() {
+    if ($this->_pdf === null) {
+      $pdfBinValues = [50, 100, 150, 200, 250, 300];
+      $pdfBinSize = 100;
+      $pdfBinMax = 1500;
+      for ($i = end($pdfBinValues) + $pdfBinSize; $i <= $pdfBinMax; $i += $pdfBinSize) {
+        $pdfBinValues[] = $i;
+      }
+      $pdfBinValues[] = 1000000;
+
+      $pdfBins = [];
+      foreach ($this->_measurementFrames as $frame) {
+        $binNr = count($pdfBinValues) - 1;
+        foreach ($pdfBinValues as $nr => $bin) {
+          if ($frame['distance'] < $bin) {
+            $binNr = $nr;
+            break;
+          }
+        }
+
+        if (!isset($pdfBins[$binNr])) {
+          $pdfBins[$binNr] = 0;
+        }
+        $pdfBins[$binNr] += 1;
+      }
+
+      // create pdf
+      $this->_pdf = [];
+      foreach ($pdfBinValues as $binId => $bin) {
+        if ($binId == 0) {
+          $label = '0-' . $bin . ' m';
+        } elseif ($binId == count($pdfBinValues) - 1) {
+          $label = $pdfBinValues[$binId - 1] . '+ m';
+        } else {
+          $label = $pdfBinValues[$binId - 1] . '-' . $bin . ' m';
+        }
+
+        $this->_pdf[$label] = (isset($pdfBins[$binId])) ? $pdfBins[$binId] : 0;
+      }
+    }
     return $this->_pdf;
+  }
+  
+  private function cdf() {
+      $this->_cdf = [
+        ['x' => 0, 'y' => 0]
+      ];
+      $cumsum = 0;
+      foreach ($this->_measurementFrames as $frame) {
+        $this->_cdf[] = [
+          'x' => round($frame['distance'], 2),
+          'y' => $cumsum
+        ];
+
+        $cumsum += 1;
+
+        $this->_cdf[] = [
+          'x' => round($frame['distance'], 2),
+          'y' => $cumsum
+        ];
+      }
+      foreach ($this->_cdf as &$point) {
+        $point['y'] = (100 * $point['y']) / $cumsum;
+        if ($point['y'] >= 90 && $this->_perc90point === null) {
+          $this->_perc90point = $point['x'];
+        }
+      }
   }
 
   public function getCdf() {
+    if ($this->_cdf === null) {
+      $this->cdf();
+    }
     return $this->_cdf;
+  }
+  
+  public function getPerc90point() {
+    if ($this->_perc90point === null) {
+      $this->cdf();
+    }
+    return $this->_perc90point;
   }
 
 }
