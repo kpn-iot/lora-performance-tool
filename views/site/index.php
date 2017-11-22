@@ -35,7 +35,7 @@ $this->title = false;
     </div>
     <div class='col-md-5 col-sm-6 text-center'>
       <h4>LoRa Tools</h4>
-      <p class="lead"><?= Html::a('https://loratools.xoxgx.nl', 'https://loratools.xoxgx.nl', ['target' => '_blank']) ?></p>
+      <p class="lead"><?= Html::a('https://www.loratools.nl', 'https://www.loratools.nl', ['target' => '_blank']) ?></p>
     </div>
   </div>
   <hr />
