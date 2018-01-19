@@ -26,6 +26,14 @@ echo DetailView::widget([
       'label' => 'Nr Devices',
       'value' => $model->frameCollection->nrDevices
     ],
+    [
+      'label' => 'Interval',
+      'attribute' => 'frameCollection.interval'
+    ],
+    [
+      'label' => 'SF',
+      'attribute' => 'frameCollection.sf'
+    ],
     'nrFrames',
     [
       'label' => 'Average gateway count',

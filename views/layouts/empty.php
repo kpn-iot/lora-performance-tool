@@ -24,7 +24,7 @@ use yii\helpers\Url;
     <meta charset="<?= Yii::$app->charset ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
     <?= Html::csrfMetaTags() ?>
-    <title><?php if ($this->title != false): ?><?= Html::encode($this->title) ?> | <?php endif ?><?= Yii::$app->name ?></title>
+    <title><?php if ($this->title != false): ?><?= Html::encode(strip_tags($this->title)) ?> | <?php endif ?><?= Yii::$app->name ?></title>
     <?php $this->head() ?>
 
     <link href='//fonts.googleapis.com/css?family=Open+Sans:400,300' rel='stylesheet' type='text/css'>

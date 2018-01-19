@@ -31,6 +31,8 @@ echo DetailView::widget([
     'vehicleTypeFormatted:raw',
     'motionIndicatorReadable',
     'countUpRange',
+    'interval',
+    'sf',
     'frr',
     'frrRel',
     [

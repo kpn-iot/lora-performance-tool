@@ -42,7 +42,7 @@ class GeolocStats extends \yii\base\BaseObject {
     $localisationCount = 0;
 
     foreach ($frameCollection->frames as $frame) {
-      if ($frame['location_age_lora'] < Frame::$locationAgeThreshold) { // new localisation
+      if ($frame['location_age_lora'] !== null && $frame['location_age_lora'] < Frame::$locationAgeThreshold) { // new localisation
         $localisationCount += 1;
       } elseif ($frame['latitude_lora'] !== null && $frame['longitude_lora'] !== null) { // contains lora location values, not new
         $noNewLocalisationCount += 1;
@@ -66,11 +66,11 @@ class GeolocStats extends \yii\base\BaseObject {
     $this->_nrLocalisations = $localisationCount; //correct geoloc
     $this->_percentageNrLocalisations = (($localisationCount + $noNewLocalisationCount) == 0) ? 0 : ($localisationCount / ($localisationCount + $noNewLocalisationCount));
 
-    $this->_average = ($measurementCount == 0) ? null : $measurementSum / $measurementCount;
-
     if ($measurementCount === 0) {
       return;
     }
+    
+    $this->_average = ($measurementCount == 0) ? null : $measurementSum / $measurementCount;
 
     usort($this->_measurementFrames, function($a, $b) {
       return $a['distance'] > $b['distance'];

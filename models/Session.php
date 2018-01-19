@@ -41,6 +41,8 @@ use app\models\lora\FrameCollection;
  * @property string fullName
  * @property string locSolveAccuracy
  * @property string locSolveSuccess
+ * @property integer interval
+ * @property integer $sf
  * @property string typeIcon
  * @property string vehicleTypeIcon
  * @property string vehicleTypeFormatted
@@ -118,6 +120,7 @@ class Session extends ActiveRecord {
       'motionIndicatorReadable' => 'Motion indicator',
       'countUpRange' => 'Counter range',
       'description' => 'Description',
+      'sf' => 'SF',
       'created_at' => 'Created At',
       'updated_at' => 'Updated At',
       'locSolveAccuracy' => 'LocSolve Accuracy',
@@ -245,10 +248,20 @@ class Session extends ActiveRecord {
   }
 
   public function getLocSolveSuccess() {
-    if ($this->frameCollection->geoloc->nrMeasurements == 0) {
-      return null;
-    }
     return round($this->frameCollection->geoloc->percentageNrLocalisations * 100) . "%";
+  }
+
+  public function getInterval() {
+    return $this->frameCollection->interval;
+  }
+
+  public function getSf() {
+    $sf = $this->frameCollection->sf;
+    if ($sf === null) {
+      return 'Variable';
+    } else {
+      return 'SF' . $sf;
+    }
   }
 
   public function getTypeIcon() {

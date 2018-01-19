@@ -106,7 +106,7 @@ class MapData extends \yii\base\BaseObject {
 
         $missingI = 0;
         do {
-          if ($interpolateLocation) {
+          if ($interpolateLocation && $item['latitude'] != null && $item['longitude'] != null && $previousItem['latitude'] != null && $previousItem['longitude'] != null) {
             $newLatitude = $previousItem['latitude'] + ((($missingI + 1) / ($nrFramesMissing + 1)) * $latitudeDiff);
             $newLongitude = $previousItem['longitude'] + ((($missingI + 1) / ($nrFramesMissing + 1)) * $longitudeDiff);
           } else {

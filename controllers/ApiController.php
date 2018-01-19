@@ -79,6 +79,44 @@ class ApiController extends Controller {
     }
   }
 
+  /**
+   * To verify the token that accompanies the DevEUI_Uplink
+   * 
+   * @param string $queryString - for instance: 
+   * @param type $bodyObject - for instance for XML: 
+   * @param type $lrcAsKey - shared secret 128-bit key in HEX representation (32 characters) in lower case
+   * @return bool Whether the token is correct
+   */
+  private function _thingparkCheckToken($queryString, $bodyObject, $lrcAsKey) {
+    // split query string into query parameters and request token
+    $re = '/(.+)&Token=([0-9a-f]{64})/';
+    $queryStringPregMatches = [];
+    preg_match($re, $queryString, $queryStringPregMatches);
+    if (count($queryStringPregMatches) != 3) {
+      return false;
+    }
+    $queryParameters = $queryStringPregMatches[1];
+    $requestToken = $queryStringPregMatches[2];
+
+    // check whether the body has the correct properties set
+    $checkProperties = ['CustomerID', 'DevEUI', 'FPort', 'FCntUp', 'payload_hex'];
+    foreach ($checkProperties as $property) {
+      if (!property_exists($bodyObject, $property)) {
+        return false;
+      }
+    }
+    $bodyElements = $bodyObject->CustomerID . $bodyObject->DevEUI . $bodyObject->FPort . $bodyObject->FCntUp . $bodyObject->payload_hex;
+    
+    // transform LRC AS-Key
+    $lrcAsKeyLower = strtolower($lrcAsKey);
+    
+    // Generate check token
+    $hashFeed = $bodyElements . $queryParameters . $lrcAsKeyLower;
+    $checkToken = hash('sha256', $hashFeed);
+    
+    return ($requestToken === $checkToken);
+  }
+
   private function _thingparkUplinkFrameIn($in) {
     // check Device
     $device = Device::find()->andWhere(['device_eui' => $in->DevEUI, 'port_id' => $in->FPort])->one();
@@ -87,20 +125,8 @@ class ApiController extends Controller {
     }
 
     // check Token
-    if ($device->lrc_as_key != null) {
-      $bodyElements = $in->CustomerID . $in->DevEUI . $in->FPort . $in->FCntUp . $in->payload_hex;
-      $getParameters = urldecode($_SERVER['QUERY_STRING']);
-      $getParameters = explode('Token=', $getParameters);
-      if (count($getParameters) != 2) {
-        static::error(400, 'Token could not be found.');
-      }
-      $requestToken = $getParameters[1];
-      $queryParameters = rtrim($getParameters[0], '&');
-      $hashIn = $bodyElements . $queryParameters . $device->lrc_as_key;
-      $checkToken = hash('sha256', $hashIn);
-      if ($requestToken !== $checkToken) {
-        static::error(405, 'No correct token.');
-      }
+    if ($device->lrc_as_key != null && !$this->_thingparkCheckToken(urldecode($_SERVER['QUERY_STRING']), $in, $device->lrc_as_key)) {
+      static::error(405, 'No correct token.');
     }
 
     // ignore late messages
@@ -143,6 +169,7 @@ class ApiController extends Controller {
     }
 
     Ingestion::frame($newFrame, $device, $previousFrameGeoloc, $rawReceptions);
+    return "OK";
   }
 
 }

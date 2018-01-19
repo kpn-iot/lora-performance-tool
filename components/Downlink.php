@@ -18,6 +18,14 @@ use app\models\Device;
 
 class Downlink {
 
+  /**
+   * Calculate token and queue a downlink message
+   * 
+   * @param Device $device
+   * @param type $payload
+   * @param type $timestampOffset
+   * @return array
+   */
   static function thingpark(Device $device, $payload, $timestampOffset = 0) {
     $url = 'https://api.kpn-lora.com/thingpark/lrc/rest/downlink';
 

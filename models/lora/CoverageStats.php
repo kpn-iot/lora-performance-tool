@@ -29,11 +29,12 @@ class CoverageStats extends \yii\base\BaseObject {
 
   private $_frameCollection;
   private $_calculated = false;
-  private $_avgRssi, $_avgGwCount = null, $_avgSnr, $_sfUsage, $_channelUsage, $_gwCountPdf, $_gwColors, $_timeline, $_graphs;
+  private $_avgRssi, $_avgGwCount = null, $_avgSnr, $_sfUsage, $_channelUsage, $_gwCountPdf, $_gwColors, $_timeline, $_graphs, $noFrames = null;
   public static $colorList = ["#3366CC", "#DC3912", "#FF9900", "#109618", "#990099", "#3B3EAC", "#0099C6", "#DD4477", "#66AA00", "#B82E2E", "#316395", "#994499", "#22AA99", "#AAAA11", "#6633CC", "#E67300", "#8B0707", "#329262", "#5574A6", "#3B3EAC"];
 
   public function __construct(FrameCollection $frameCollection, $config = []) {
     $this->_frameCollection = $frameCollection;
+	$this->noFrames = ($frameCollection->nrFrames === 0);
     parent::__construct($config);
   }
 
@@ -188,6 +189,9 @@ class CoverageStats extends \yii\base\BaseObject {
 
   public function getAvgGwCount() {
     if ($this->_avgGwCount === null) {
+	  if ($this->noFrames) {
+		  return $this->_avgGwCount;
+	  }
       $gwCountList = [];
       foreach ($this->_frameCollection->frames as $frame) {
         $gwCountList[] = $frame['gateway_count'];

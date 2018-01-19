@@ -57,6 +57,7 @@ $this->params['breadcrumbs'][] = $this->title;
           }
         ],
         [
+          'label' => 'Last activity',
           'attribute' => 'lastFrame.created_at',
           'format' => 'timeAgo'
         ],

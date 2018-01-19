@@ -30,7 +30,11 @@ $this->params['breadcrumbs'][] = $this->title;
     'columns' => [
       'created_at:timeAgo',
       'created_at:dateTime',
-      'device_eui',
+      [
+        'attribute' => 'query_string',
+        'value' => 'device_eui',
+        'label' => 'DevEUI'
+      ],
       'comments:ntext',
       [
         'class' => 'yii\grid\ActionColumn',

@@ -81,7 +81,7 @@ class ApiLogSearch extends ApiLog {
     ]);
 
     $query->andFilterWhere(['like', 'origin', $this->origin])
-      ->andFilterWhere(['like', 'query_string', $this->query_string])
+      ->andFilterWhere(['like', 'query_string', ($this->query_string != null) ? ("LrnDevEui=" . $this->query_string . "&") : $this->query_string])
       ->andFilterWhere(['like', 'body', $this->body])
       ->andFilterWhere(['like', 'comments', $this->comments]);
 

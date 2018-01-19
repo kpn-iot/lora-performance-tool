@@ -75,6 +75,18 @@ $columns = [
       return Html::a($data->countUpRange, ['/frames', 'FrameSearch[session_id]' => $data->id]);
     }
   ],
+  'interval',
+  'sf',
+	[
+	  'label' => 'Avg GW count',
+	  'attribute' => 'frameCollection.coverage.avgGwCount',
+    'headerOptions' => [
+      'class' => 'text-right'
+    ],
+    'contentOptions' => [
+      'class' => 'text-right'
+    ]
+	],
   [
     'attribute' => 'locSolveAccuracy',
     'headerOptions' => [
@@ -190,11 +202,14 @@ $columns = [
       <button class="btn btn-default" onclick="save()">Put selected sessions in session set</button>
     </div>
   </div>
+  <div class="input-group">
+	<button class="btn btn-link" onclick="quickReport()">Quick coverage report</button>
+  </div>
   <span id="response"></span>
 </form>
 <br />
 <script>
-  function save() {
+  function getIds() {
     event.preventDefault();
     var ids = $('#grid').yiiGridView('getSelectedRows');
     $("#response").text('');
@@ -203,6 +218,18 @@ $columns = [
       saveDone();
       return;
     }
+	return ids;
+  }
+  function quickReport() {
+	var ids = getIds();
+    var url = "<?= Url::to(['/sessions/report-coverage', 'id' => 'HERE']) ?>";
+    var sessionSetId = $("#session-set").val();
+    url = url.replace("HERE", ids.join('.'));
+    window.location = url;
+  }
+  
+  function save() {
+	var ids = getIds();
     var urlCreate = "<?= Url::to(['/session-sets/create', 'session_ids' => 'HERE']) ?>";
     var urlUpdate = "<?= Url::to(['/session-sets/add-sessions', 'id' => 'WHAT', 'session_ids' => 'HERE']) ?>";
     var sessionSetId = $("#session-set").val();

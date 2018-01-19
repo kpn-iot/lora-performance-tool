@@ -137,7 +137,7 @@ class Quick extends ActiveRecord {
     }
 
     while (($data = fgetcsv($handle, 0, ',')) !== false) {
-      if ($data[0] != '0' || $data[5] == 'None') {
+      if ($data[0] != '0' || $data[5] == 'None' || (count($data) >= 131 && $data[131] == '1')) {
         continue;
       }
 
@@ -171,7 +171,7 @@ class Quick extends ActiveRecord {
         'location_age_lora' => null,
         'distance' => null,
         'time' => $data[2],
-        'created_at' => $data[2],
+        'created_at' => $data[1],
         'timestamp' => strtotime($data[2])
       ];
 

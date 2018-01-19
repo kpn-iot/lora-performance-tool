@@ -46,8 +46,8 @@ class ApiLog extends ActiveRecord {
   }
 
   public function getDevice_eui() {
-    preg_match("/LrnDevEui=([0-9A-Z]+)&/", $this->query_string, $output);
-    return (count($output) == 2) ? $output[1] : null;
+    preg_match("/LrnDevEui=([0-9A-fa-f]+)&/", $this->query_string, $output);
+    return (count($output) == 2) ? strtoupper($output[1]) : null;
   }
 
   /**
