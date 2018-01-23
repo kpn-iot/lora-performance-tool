@@ -185,7 +185,7 @@ class Quick extends ActiveRecord {
             $distance = "?";
           } else {
             $distance = Calc::coordinateDistance($latitude, $longitude, $gwInfo['latitude'], $gwInfo['longitude']);
-            $distance = Yii::$app->formatter->asDecimal($distance, 0) . 'm';
+            $distance = Yii::$app->formatter->asDistance($distance, 0);
           }
         } else {
           $distance = null;

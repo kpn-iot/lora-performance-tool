@@ -20,6 +20,7 @@ namespace app\models;
  * @property integer $id
  * @property string $name
  * @property string $description
+ * @property integer $nrSessions
  * @property string $created_at
  * @property string $updated_at
  *
@@ -58,6 +59,7 @@ class SessionSet extends ActiveRecord {
       'id' => 'ID',
       'name' => 'Name',
       'description' => 'Description',
+      'nrSessions' => 'Nr. Sessions',
       'created_at' => 'Created At',
       'updated_at' => 'Updated At',
       'sessionCollection.frameCollection.nrDevices' => 'Nr Devices',
@@ -80,6 +82,14 @@ class SessionSet extends ActiveRecord {
    */
   public function getSessionSetLinks() {
     return $this->hasMany(SessionSetLink::className(), ['set_id' => 'id']);
+  }
+  
+  /**
+   * 
+   * @return integer
+   */
+  public function getNrSessions() {
+    return $this->getSessions()->count();
   }
 
   /**

@@ -175,7 +175,7 @@ class Frame extends ActiveRecord {
         $distance = '?';
       } else {
         $distance = Calc::coordinateDistance($this->latitude, $this->longitude, $reception->gateway->latitude, $reception->gateway->longitude);
-        $distance = Yii::$app->formatter->asDecimal($distance, 0) . 'm';
+        $distance = Yii::$app->formatter->asDistance($distance, 0);
       }
       $out .= "<tr><td>" . Html::a($reception->gateway->lrr_id, ['/gateways/view', 'id' => $reception->gateway_id]) . "</td>"
         . "<td class='text-right'>" . $distance . "</td>"

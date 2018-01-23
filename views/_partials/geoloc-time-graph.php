@@ -53,7 +53,7 @@ if ($frameCollection->geoloc->nrMeasurements === 0) {
         right: 10,
         height: 200
       },
-      vAxis: {title: 'Accuracy [m]'},
+      vAxis: {title: 'Accuracy [m]', minValue: 0},
       pointSize: 5,
       backgroundColor: 'transparent'
     };

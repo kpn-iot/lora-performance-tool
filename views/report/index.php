@@ -47,6 +47,8 @@ $form = ActiveForm::begin([
   </div>
   <div class="col-xs-6 col-md-2">
     <?= $form->field($sessionSearchModel, 'motion_indicator')->checkboxList(Session::$motionIndicatorOptions) ?>
+
+    <?= $form->field($frameSearchModel, 'sf')->checkboxList([7 => 'SF7', 8 => 'SF8', 9 => 'SF9', 10 => 'SF10', 11 => 'SF11', 12 => 'SF12']) ?>
   </div>
   <div class="col-xs-12 col-md-5">
     <label>Gateway count range</label>
@@ -70,7 +72,7 @@ $form = ActiveForm::begin([
         <?= $form->field($frameSearchModel, 'createdAtMax')->label(false) ?>
       </div>
       <div class="col-xs-12">
-        <?= $form->field($frameSearchModel, 'sf')->checkboxList([7 => 'SF7', 8 => 'SF8', 9 => 'SF9', 10 => 'SF10', 11 => 'SF11', 12 => 'SF12']) ?>
+        <?= $form->field($sessionSearchModel, 'description')->textarea(['rows' => 5])->label('Session description') ?>
       </div>
     </div>
   </div>

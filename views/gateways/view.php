@@ -68,7 +68,7 @@ GridView::widget([
         } else {
           $distance = Calc::coordinateDistance($data->frame->latitude, $data->frame->longitude, $model->latitude, $model->longitude);
         }
-        return Yii::$app->formatter->asDecimal($distance, 0) . 'm';
+        return Yii::$app->formatter->asDistance($distance, 0);
       }
     ],
     'rssi',

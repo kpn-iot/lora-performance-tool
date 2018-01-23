@@ -47,6 +47,7 @@ $this->params['breadcrumbs'][] = $this->title;
       'payloadTypeReadable:raw',
       'as_id',
       'lrc_as_key',
+      'autosplitFormatted:raw',
       'created_at:dateTime',
       'updated_at:dateTime',
     ],

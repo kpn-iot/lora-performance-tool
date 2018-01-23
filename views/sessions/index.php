@@ -76,25 +76,38 @@ $columns = [
     }
   ],
   'interval',
-  'sf',
-	[
-	  'label' => 'Avg GW count',
-	  'attribute' => 'frameCollection.coverage.avgGwCount',
-    'headerOptions' => [
-      'class' => 'text-right'
-    ],
-    'contentOptions' => [
-      'class' => 'text-right'
-    ]
-	],
   [
-    'attribute' => 'locSolveAccuracy',
+    'attribute' => 'sf',
+    'headerOptions' => [
+      'style' => 'min-width:65px'
+    ]
+  ],
+  [
+    'label' => 'Avg GW count',
+    'attribute' => 'frameCollection.coverage.avgGwCount',
     'headerOptions' => [
       'class' => 'text-right'
     ],
     'contentOptions' => [
       'class' => 'text-right'
     ]
+  ],
+  [
+    'label' => 'LocSolve Stats',
+    'format' => 'raw',
+    'headerOptions' => [
+      'class' => 'text-right',
+      'style' => 'min-width: 140px'
+    ],
+    'contentOptions' => [
+      'class' => 'text-right'
+    ],
+    'value' => function($data) {
+      if ($data->frameCollection->geoloc->nrMeasurements === 0) {
+        return null;
+      }
+      return "Median: <b>" . Yii::$app->formatter->asDistance($data->frameCollection->geoloc->median) . "</b><br />Average: " . $data->locSolveAccuracy . "<br />90% under: " . Yii::$app->formatter->asDistance($data->frameCollection->geoloc->perc90point);
+    }
   ],
   [
     'attribute' => 'locSolveSuccess',
@@ -203,7 +216,7 @@ $columns = [
     </div>
   </div>
   <div class="input-group">
-	<button class="btn btn-link" onclick="quickReport()">Quick coverage report</button>
+    <button class="btn btn-link" onclick="quickReport()">Quick coverage report</button>
   </div>
   <span id="response"></span>
 </form>
@@ -218,18 +231,18 @@ $columns = [
       saveDone();
       return;
     }
-	return ids;
+    return ids;
   }
   function quickReport() {
-	var ids = getIds();
+    var ids = getIds();
     var url = "<?= Url::to(['/sessions/report-coverage', 'id' => 'HERE']) ?>";
     var sessionSetId = $("#session-set").val();
     url = url.replace("HERE", ids.join('.'));
     window.location = url;
   }
-  
+
   function save() {
-	var ids = getIds();
+    var ids = getIds();
     var urlCreate = "<?= Url::to(['/session-sets/create', 'session_ids' => 'HERE']) ?>";
     var urlUpdate = "<?= Url::to(['/session-sets/add-sessions', 'id' => 'WHAT', 'session_ids' => 'HERE']) ?>";
     var sessionSetId = $("#session-set").val();

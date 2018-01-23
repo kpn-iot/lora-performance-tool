@@ -25,7 +25,7 @@ use app\helpers\ArrayHelper;
  * @property \app\models\Frame[][] $framesPerDevice
  * @property MapData $mapData
  * @property integer interval
- * @property interger sf
+ * @property integer sf
  */
 class FrameCollection extends \yii\base\BaseObject {
 
@@ -33,7 +33,6 @@ class FrameCollection extends \yii\base\BaseObject {
   private $_framesPerDevice = null, $_nrDevices = null, $_nrFrames = null, $_coverage = null, $_geoloc, $_mapData = null, $_interval = false, $_sf = false;
 
   public function __construct($frames, $config = []) {
-
     usort($frames, function($a, $b) {
       return $a['timestamp'] - $b['timestamp'];
     });
@@ -108,7 +107,7 @@ class FrameCollection extends \yii\base\BaseObject {
     }
 
     $frames = $this->frames;
-    if (count($frames) < 3) {
+    if (count($frames) < 2) {
       return null;
     }
     $intervals = [];
@@ -116,7 +115,7 @@ class FrameCollection extends \yii\base\BaseObject {
       if ($frames[$i + 1]['count_up'] - $frames[$i]['count_up'] == 0) {
         continue;
       }
-      $intervals[] = $frames[$i + 1]['timestamp'] - $frames[$i]['timestamp'] / ($frames[$i + 1]['count_up'] - $frames[$i]['count_up']);
+      $intervals[] = ($frames[$i + 1]['timestamp'] - $frames[$i]['timestamp']) / ($frames[$i + 1]['count_up'] - $frames[$i]['count_up']);
     }
 
     $avg = ArrayHelper::getAverage($intervals);
@@ -146,13 +145,22 @@ class FrameCollection extends \yii\base\BaseObject {
   }
 
   private function _getSf() {
-    $sf = $this->frames[0]['sf'];
+    $minSf = $this->frames[0]['sf'];
+    $maxSf = $this->frames[0]['sf'];
     for ($i = 1; $i < count($this->frames); $i++) {
-      if ($this->frames[$i]['sf'] != $sf) {
-        return null;
+      if ($this->frames[$i]['sf'] < $minSf) {
+        $minSf = $this->frames[$i]['sf'];
+      }
+      if ($this->frames[$i]['sf'] > $maxSf) {
+        $maxSf = $this->frames[$i]['sf'];
       }
     }
-    return $sf;
+
+    if ($minSf === $maxSf) {
+      return $minSf;
+    } else {
+      return $minSf . '-' . $maxSf;
+    }
   }
 
   public function getMapData() {

@@ -49,6 +49,12 @@ $this->params['breadcrumbs'][] = $this->title;
           'format' => 'raw'
         ],
         [
+          'attribute' => 'autosplit',
+          'filter' => [0 => 'No', 1 => 'Yes'],
+          'format' => 'raw',
+          'value' => 'autosplitFormatted'
+        ],
+        [
           'format' => 'raw',
           'attribute' => 'totalSessions',
           'filter' => false,

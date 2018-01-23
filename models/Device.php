@@ -15,6 +15,7 @@
 namespace app\models;
 
 use app\components\data\Decoding;
+use app\helpers\Html;
 
 /**
  * This is the model class for table "devices".
@@ -30,6 +31,8 @@ use app\components\data\Decoding;
  * @property string $created_at
  * @property string $updated_at
  * @property string $hash
+ * @property bool $autosplit
+ * @property string $autosplitFormatted
  *
  * @property Session[] $sessions
  */
@@ -55,6 +58,7 @@ class Device extends ActiveRecord {
       [['device_eui'], 'string', 'max' => 16],
       [['payload_type'], 'string', 'max' => 30],
       [['lrc_as_key'], 'string', 'max' => 32],
+      [['autosplit'], 'boolean'],
       [['device_eui', 'port_id'], 'unique', 'targetAttribute' => ['device_eui', 'port_id'], 'message' => 'The combination of Device Eui and Port ID has already been taken.'],
     ];
   }
@@ -73,6 +77,7 @@ class Device extends ActiveRecord {
       'as_id' => 'AS-ID',
       'lrc_as_key' => 'LRC-AS Key',
       'description' => 'Description',
+      'autosplitFormatted' => 'Autosplit',
       'created_at' => 'Created At',
       'updated_at' => 'Updated At',
     ];
@@ -84,17 +89,6 @@ class Device extends ActiveRecord {
 
   public function getLastFrame() {
     return $this->hasOne(Frame::className(), ['session_id' => 'id'])->orderBy(['created_at' => SORT_DESC])->via('lastSession');
-    if ($this->lastSession == null) {
-      return null;
-    }
-    return $this->lastSession->lastFrame;
-    $session = $this->getSessions()->with(['frames' => function ($query) {
-          return $query->orderBy(['created_at' => SORT_DESC])->limit(1);
-        }])->orderBy(['created_at' => SORT_DESC])->one();
-    if ($session == null || $session->frames == null) {
-      return null;
-    }
-    return $session->frames[0];
   }
 
   public function getHash() {
@@ -123,6 +117,10 @@ class Device extends ActiveRecord {
       return $supportedPayloadTypes[$this->payload_type];
     }
     return null;
+  }
+
+  public function getAutosplitFormatted() {
+    return ($this->autosplit) ? Html::icon('ok', ['class' => 'text-success']) : Html::icon('remove', ['class' => 'text-danger']);
   }
 
 }

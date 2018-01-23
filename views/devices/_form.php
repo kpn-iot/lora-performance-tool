@@ -36,6 +36,8 @@ use app\components\data\Decoding;
 
   <?= $form->field($model, 'lrc_as_key')->textInput(['maxlength' => 32])->hint('This should be a 16 Byte HEX key. ' . Html::a('Generate here', ['/site/keys'], ['target' => '_blank']) . '. <span class="bg-danger text-danger">LRC-AS Key is not required, but very much recommended, since it enables Token verification</span>') ?>
 
+  <?= $form->field($model, 'autosplit')->checkbox()->hint('Whether there should start a new session after midnight') ?>
+  
   <?= $form->field($model, 'description')->textarea(['rows' => 6]) ?>
 
   <div class="form-group">

@@ -62,7 +62,7 @@ class Ingestion {
    * @return Frame
    */
   public static function frame($newFrame, $device, $previousFrameGeoloc = null, $receptions = null) {
-    $session = Session::find()->andWhere(['device_id' => $device->id])->orderBy('created_at DESC')->one();
+    $session = Session::find()->with('device')->andWhere(['device_id' => $device->id])->orderBy('created_at DESC')->one();
     $startNewSession = false;
     $copyOldSessionInfo = false;
     if ($session === null) {
@@ -70,7 +70,7 @@ class Ingestion {
     } elseif ($session->lastFrame !== null) {
       if ($newFrame->count_up < $session->lastFrame->count_up || $newFrame->count_up == 0) { //new counter value is smaller than the previous frame
         $startNewSession = true;
-      } elseif (strtotime(date('d-m-Y', strtotime($newFrame->time))) > strtotime(date('d-m-Y', strtotime($session->lastFrame->time)))) { // new frame received on a new day (after midnight)
+      } elseif ($session->device->autosplit && (strtotime(date('d-m-Y', strtotime($newFrame->time))) > strtotime(date('d-m-Y', strtotime($session->lastFrame->time))))) { // new frame received on a new day (after midnight)
         $startNewSession = true;
         $copyOldSessionInfo = true;
       }

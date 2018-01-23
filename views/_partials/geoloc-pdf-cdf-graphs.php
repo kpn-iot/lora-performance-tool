@@ -23,11 +23,12 @@ if (!isset($makePNG)) {
     <p class="lead">No frames available to calculate accuracy with!</p>
   </div>
 <?php else: ?>
-  <h3>Average GeoLoc accuracy: <?= Yii::$app->formatter->asDecimal($stats->average, 1) ?>m 
+  <h3>LocSolve Accuracy Median: <?= Yii::$app->formatter->asDistance($stats->median) ?> 
     <small>
+      Average: <?= Yii::$app->formatter->asDistance($stats->average) ?> - 
+      90% under: <?= Yii::$app->formatter->asDistance($stats->perc90point) ?> | 
       <?= Yii::$app->formatter->asDecimal($stats->nrLocalisations, 0) ?> LocSolves - 
-      <?= Yii::$app->formatter->asDecimal($stats->percentageNrLocalisations * 100, 1) ?>% success - 
-      90% under <?= Yii::$app->formatter->asDecimal($stats->perc90point, 1) ?>m
+      <?= Yii::$app->formatter->asDecimal($stats->percentageNrLocalisations * 100, 1) ?>% success
     </small>
   </h3>
   <script>
@@ -49,13 +50,14 @@ if (!isset($makePNG)) {
         right: 10,
         height: 295
       },
-      vAxis: {title: 'Occurance [#]'},
-      backgroundColor: 'transparent'
+      vAxis: {title: 'Occurrence [%]', minValue: 0, maxValue: 100},
+      backgroundColor: 'transparent',
+      tooltip: {isHtml: true}
     };
 
     var cdfGraph = <?= json_encode($stats->cdf); ?>;
     var cdfOptions = {
-      title: 'Cumulative LocSolve cdf',
+      title: 'LocSolve accuracy cdf',
       height: 400,
       colors: ['#4CAF50'],
       legend: {
@@ -68,8 +70,9 @@ if (!isset($makePNG)) {
         height: 295
       },
       hAxis: {title: 'Accuracy [m]', minValue: 0},
-      vAxis: {title: 'Cumulative occurance [%]'},
-      backgroundColor: 'transparent'
+      vAxis: {title: 'Occurrence [%]', maxValue: 100},
+      backgroundColor: 'transparent',
+      tooltip: {isHtml: true}
     };
 
     function drawGraphs() {
@@ -77,10 +80,11 @@ if (!isset($makePNG)) {
       var pdfData = new google.visualization.DataTable();
       pdfData.addColumn('string', 'Distance');
       pdfData.addColumn('number', 'Occurance');
+      pdfData.addColumn({type: 'string', role: 'tooltip', p: {html: true}});
 
       var pdfRows = [];
       for (i in pdfGraph) {
-        pdfRows.push([i, pdfGraph[i]]);
+        pdfRows.push([i, pdfGraph[i], '<div style="padding:5px;max-width:140px"><b>' + pdfGraph[i] + '%</b> is in the <br />range <b>' + i + '</b></div>']);
       }
       pdfData.addRows(pdfRows);
 
@@ -98,11 +102,12 @@ if (!isset($makePNG)) {
 
       var cdfData = new google.visualization.DataTable();
       cdfData.addColumn('number', 'Distance');
-      cdfData.addColumn('number', 'Cum. occurance');
+      cdfData.addColumn('number', 'Cum. Occurrence');
+      cdfData.addColumn({type: 'string', role: 'tooltip', p: {html: true}});
 
       var cdfRows = [];
       for (i in cdfGraph) {
-        cdfRows.push([cdfGraph[i]['x'], cdfGraph[i]['y']]);
+        cdfRows.push([cdfGraph[i]['x'], cdfGraph[i]['y'], '<div style="padding:5px;max-width:140px"><b>' + (Math.round(100*cdfGraph[i]['y'])/100) + '%</b> is under <b>' + cdfGraph[i]['x'] + 'm</b>']);
       }
       cdfData.addRows(cdfRows);
 

@@ -47,9 +47,15 @@ DetailView::widget([
     'description:ntext',
     'sessionCollection.frameCollection.nrDevices',
     [
+      'label' => 'Accuracy median',
+      'value' => function($model) {
+        return Yii::$app->formatter->asDistance($model->sessionCollection->frameCollection->geoloc->median);
+      }
+    ],
+    [
       'label' => 'Average accuracy',
       'value' => function($model) {
-        return Yii::$app->formatter->asDecimal($model->sessionCollection->frameCollection->geoloc->average, 1) . ' m';
+        return Yii::$app->formatter->asDistance($model->sessionCollection->frameCollection->geoloc->average);
       }
     ],
     [
@@ -63,12 +69,9 @@ DetailView::widget([
 ?>
 
 <hr />
-<?= $this->render('/_partials/geoloc-pdf-cdf-graphs', ['stats' => $sessionCollection->frameCollection->geoloc, 'makePNG' => true]) ?>
+<?= $this->render('/_partials/geoloc-pdf-cdf-graphs', ['stats' => $sessionCollection->frameCollection->geoloc]) ?>
 <hr />
 <?= $this->render('/_partials/geoloc-first-frames', ['avgDistances' => $sessionCollection->firstFrameLocSolveAccuracy]) ?>
 
-</div>
-<div class="container-fluid">
-  <?= $this->render('/_partials/geoloc-table', ['frameCollection' => $sessionCollection->frameCollection]) ?>
 </div>
 <div class="container">

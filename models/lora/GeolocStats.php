@@ -25,11 +25,12 @@ use app\models\Frame;
  * @property array $cdf
  * @property array $timeGraphs
  * @property integer $perc90point
+ * @property interger $median
  */
 class GeolocStats extends \yii\base\BaseObject {
 
   private $_frameCollection, $_measurementFrames;
-  private $_average, $_nrMeasurements, $_nrLocalisations, $_percentageNrLocalisations, $_pdf = null, $_cdf = null, $_timeGraphs = null, $_perc90point = null;
+  private $_average, $_nrMeasurements, $_nrLocalisations, $_percentageNrLocalisations, $_pdf = null, $_cdf = null, $_timeGraphs = null, $_perc90point = null, $_median = null, $_cdfCalculated = false;
 
   public function __construct(FrameCollection $frameCollection, $config = []) {
     $this->_frameCollection = $frameCollection;
@@ -69,7 +70,7 @@ class GeolocStats extends \yii\base\BaseObject {
     if ($measurementCount === 0) {
       return;
     }
-    
+
     $this->_average = ($measurementCount == 0) ? null : $measurementSum / $measurementCount;
 
     usort($this->_measurementFrames, function($a, $b) {
@@ -163,47 +164,68 @@ class GeolocStats extends \yii\base\BaseObject {
           $label = $pdfBinValues[$binId - 1] . '-' . $bin . ' m';
         }
 
-        $this->_pdf[$label] = (isset($pdfBins[$binId])) ? $pdfBins[$binId] : 0;
+        $this->_pdf[$label] = (isset($pdfBins[$binId])) ? round(100 * $pdfBins[$binId] / $this->_nrMeasurements, 1) : 0;
       }
     }
     return $this->_pdf;
   }
-  
+
   private function cdf() {
-      $this->_cdf = [
-        ['x' => 0, 'y' => 0]
+    $this->_cdfCalculated = true;
+    if ($this->_nrMeasurements === 0) {
+      return;
+    }
+    $this->_cdf = [
+      ['x' => 0, 'y' => 0]
+    ];
+    $cumsum = 0;
+    foreach ($this->_measurementFrames as $frame) {
+      $this->_cdf[] = [
+        'x' => round($frame['distance'], 2),
+        'y' => $cumsum
       ];
-      $cumsum = 0;
-      foreach ($this->_measurementFrames as $frame) {
-        $this->_cdf[] = [
-          'x' => round($frame['distance'], 2),
-          'y' => $cumsum
-        ];
 
-        $cumsum += 1;
+      $cumsum += 1;
 
-        $this->_cdf[] = [
-          'x' => round($frame['distance'], 2),
-          'y' => $cumsum
-        ];
+      $this->_cdf[] = [
+        'x' => round($frame['distance'], 2),
+        'y' => $cumsum
+      ];
+    }
+    // add an end line to the CDF graph
+    $lastPoint = end($this->_cdf);
+    $this->_cdf[] = [
+      'x' => $lastPoint['x'] * 1.1,
+      'y' => $lastPoint['y']
+    ];
+
+    foreach ($this->_cdf as &$point) {
+      $point['y'] = $this->_percentageNrLocalisations * (100 * $point['y']) / $cumsum;
+      if ($point['y'] >= 90 && $this->_perc90point === null) {
+        $this->_perc90point = $point['x'];
       }
-      foreach ($this->_cdf as &$point) {
-        $point['y'] = (100 * $point['y']) / $cumsum;
-        if ($point['y'] >= 90 && $this->_perc90point === null) {
-          $this->_perc90point = $point['x'];
-        }
+      if ($point['y'] >= 50 && $this->_median === null) {
+        $this->_median = $point['x'];
       }
+    }
   }
 
   public function getCdf() {
-    if ($this->_cdf === null) {
+    if (!$this->_cdfCalculated) {
       $this->cdf();
     }
     return $this->_cdf;
   }
-  
+
+  public function getMedian() {
+    if (!$this->_cdfCalculated) {
+      $this->cdf();
+    }
+    return $this->_median;
+  }
+
   public function getPerc90point() {
-    if ($this->_perc90point === null) {
+    if (!$this->_cdfCalculated) {
       $this->cdf();
     }
     return $this->_perc90point;

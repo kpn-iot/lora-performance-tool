@@ -98,11 +98,12 @@ class SessionCollection extends \yii\base\BaseObject {
       }
       $firstFrameAvgAccuracy = [];
       foreach ($firstFrames as $frameSet) {
-        $avgAccuracySum = 0;
-        foreach ($frameSet as $frame) {
-          $avgAccuracySum += $frame['distance'];
+        if (count($frameSet) == 0) {
+          $firstFrameAvgAccuracy[] = 0;
+          continue;
         }
-        $firstFrameAvgAccuracy[] = $avgAccuracySum / count($frameSet);
+        $tempFrameCollection = new FrameCollection($frameSet);
+        $firstFrameAvgAccuracy[] = $tempFrameCollection->geoloc->average;
       }
       $this->_firstFrameLocSolveAccuracy = $firstFrameAvgAccuracy;
     }

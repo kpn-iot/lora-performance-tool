@@ -38,7 +38,17 @@ $attributes = array_merge($attributes, [
     'attribute' => 'frameCollection.coverage.avgGwCount',
     'label' => 'Avg. GW Count'
   ],
-  'locSolveAccuracy:raw',
+  [
+    'attribute' => 'frameCollection.geoloc.median',
+    'label' => 'LocSolve Median Accuracy',
+    'value' => function($data) {
+      if ($data->frameCollection->geoloc->median === null) {
+        return null;
+      }
+      return Yii::$app->formatter->asDistance($data->frameCollection->geoloc->median);
+    },
+    'format' => 'raw'
+  ],
   'locSolveSuccess:raw',
   [
     'label' => 'Last frame',

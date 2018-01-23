@@ -35,6 +35,7 @@ $this->params['breadcrumbs'][] = $this->title;
       'id',
       'name',
       'description:ntext',
+      'nrSessions',
       'created_at:dateTime',
       'updated_at:dateTime',
       [

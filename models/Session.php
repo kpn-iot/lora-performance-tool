@@ -244,10 +244,13 @@ class Session extends ActiveRecord {
     if ($this->frameCollection->geoloc->nrMeasurements == 0) {
       return null;
     }
-    return Yii::$app->formatter->asDecimal($this->frameCollection->geoloc->average, 2) . 'm';
+    return Yii::$app->formatter->asDistance($this->frameCollection->geoloc->average);
   }
 
   public function getLocSolveSuccess() {
+    if ($this->frameCollection->geoloc->nrMeasurements === 0) {
+      return null;
+    }
     return round($this->frameCollection->geoloc->percentageNrLocalisations * 100) . "%";
   }
 

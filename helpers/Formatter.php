@@ -79,5 +79,13 @@ class Formatter extends \yii\i18n\Formatter {
 
     return Html::a($value, 'https://www.google.nl/maps/search/' . $noSpace, ['target' => '_blank']);
   }
+  
+  public function asDistance($value, $decimals = 1) {
+    $val = $this->asDecimal($value, $decimals);
+    if ($value !== null) {
+      $val .= "m";
+    }
+    return $val;
+  }
 
 }
