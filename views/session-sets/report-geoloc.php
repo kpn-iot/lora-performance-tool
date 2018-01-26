@@ -71,7 +71,14 @@ DetailView::widget([
 <hr />
 <?= $this->render('/_partials/geoloc-pdf-cdf-graphs', ['stats' => $sessionCollection->frameCollection->geoloc]) ?>
 <hr />
-<?= $this->render('/_partials/geoloc-first-frames', ['avgDistances' => $sessionCollection->firstFrameLocSolveAccuracy]) ?>
+<div class="row">
+  <div class="col-sm-9">
+    <?= $this->render('/_partials/geoloc-first-frames', ['avgDistances' => $sessionCollection->firstFrameLocSolveAccuracy]) ?>
+  </div>
+  <div class="col-sm-3">
+    <?= $this->render('/_partials/geoloc-per-gateway-count-table', ['geolocStats' => $sessionCollection->frameCollection->geoloc]) ?>
+  </div>
+</div>
 
 </div>
 <div class="container">

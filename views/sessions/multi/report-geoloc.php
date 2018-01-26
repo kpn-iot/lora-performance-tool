@@ -44,8 +44,14 @@ $this->params['breadcrumbs'][] = $this->title;
 <hr />
 <?= $this->render('/_partials/geoloc-first-frames', ['avgDistances' => $sessionCollection->firstFrameLocSolveAccuracy]) ?>
 <hr />
-<?= $this->render('/_partials/geoloc-time-graph', ['frameCollection' => $sessionCollection->frameCollection]) ?>
-<hr />
+<div class="row">
+  <div class="col-sm-9">
+    <?= $this->render('/_partials/geoloc-time-graph', ['frameCollection' => $sessionCollection->frameCollection]) ?>
+  </div>
+  <div class="col-sm-3">
+    <?= $this->render('/_partials/geoloc-per-gateway-count-table', ['geolocStats' => $sessionCollection->frameCollection->geoloc]) ?>
+  </div>
+</div><hr />
 </div>
 <div class="container-fluid">
   <?= $this->render('/_partials/geoloc-table', ['frameCollection' => $sessionCollection->frameCollection]) ?>

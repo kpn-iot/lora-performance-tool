@@ -26,7 +26,7 @@ namespace app\models;
  *
  * @property SessionSetLink[] $sessionSetLinks
  * @property Session[] $sessions
- * @property SessionCollection $sessionCollection
+ * @property lora\SessionCollection $sessionCollection
  */
 class SessionSet extends ActiveRecord {
 

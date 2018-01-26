@@ -52,7 +52,14 @@ $this->params['breadcrumbs'][] = $this->title;
 <hr />
 <?= $this->render('/_partials/geoloc-pdf-cdf-graphs', ['stats' => $model->frameCollection->geoloc]) ?>
 <hr />
-<?= $this->render('/_partials/geoloc-time-graph', ['frameCollection' => $model->frameCollection]) ?>
+<div class="row">
+  <div class="col-sm-9">
+    <?= $this->render('/_partials/geoloc-time-graph', ['frameCollection' => $model->frameCollection]) ?>
+  </div>
+  <div class="col-sm-3">
+    <?= $this->render('/_partials/geoloc-per-gateway-count-table', ['geolocStats' => $model->frameCollection->geoloc]) ?>
+  </div>
+</div>
 <hr />
 </div>
 <div class="container-fluid">

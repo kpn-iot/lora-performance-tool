@@ -26,11 +26,12 @@ use app\models\Frame;
  * @property array $timeGraphs
  * @property integer $perc90point
  * @property interger $median
+ * @property array $perGatewayCount
  */
 class GeolocStats extends \yii\base\BaseObject {
 
   private $_frameCollection, $_measurementFrames;
-  private $_average, $_nrMeasurements, $_nrLocalisations, $_percentageNrLocalisations, $_pdf = null, $_cdf = null, $_timeGraphs = null, $_perc90point = null, $_median = null, $_cdfCalculated = false;
+  private $_average, $_nrMeasurements, $_nrLocalisations, $_percentageNrLocalisations, $_pdf = null, $_cdf = null, $_timeGraphs = null, $_perc90point = null, $_median = null, $_cdfCalculated = false, $_perGatewayCount = null;
 
   public function __construct(FrameCollection $frameCollection, $config = []) {
     $this->_frameCollection = $frameCollection;
@@ -42,11 +43,21 @@ class GeolocStats extends \yii\base\BaseObject {
     $noNewLocalisationCount = 0;
     $localisationCount = 0;
 
+    $this->_perGatewayCount = [];
+    for ($gwCount = 1; $gwCount <= 10; $gwCount++) {
+      $this->_perGatewayCount[$gwCount] = ['count' => 0, 'locsolves' => 0];
+    }
+
     foreach ($frameCollection->frames as $frame) {
       if ($frame['location_age_lora'] !== null && $frame['location_age_lora'] < Frame::$locationAgeThreshold) { // new localisation
         $localisationCount += 1;
+
+        $this->_perGatewayCount[$frame['gateway_count']]['count'] += 1;
+        $this->_perGatewayCount[$frame['gateway_count']]['locsolves'] += 1;
       } elseif ($frame['latitude_lora'] !== null && $frame['longitude_lora'] !== null) { // contains lora location values, not new
         $noNewLocalisationCount += 1;
+
+        $this->_perGatewayCount[$frame['gateway_count']]['count'] += 1;
         continue;
       } else { // no lora location values
         continue;
@@ -229,6 +240,10 @@ class GeolocStats extends \yii\base\BaseObject {
       $this->cdf();
     }
     return $this->_perc90point;
+  }
+  
+  public function getPerGatewayCount() {
+    return $this->_perGatewayCount;
   }
 
 }
