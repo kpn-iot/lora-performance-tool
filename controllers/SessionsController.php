@@ -20,6 +20,7 @@ use Yii;
 use app\models\Session;
 use app\models\SessionSearch;
 use app\models\SessionSet;
+use app\models\SessionSplitForm;
 use yii\base\ErrorException;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -149,6 +150,7 @@ class SessionsController extends Controller {
     }
 
     if ($model->load(Yii::$app->request->post()) && $model->save()) {
+      $model->updateProperties();
       Yii::$app->session->addFlash("success", "Session updated!");
       return $this->refresh();
     } else {
@@ -161,23 +163,28 @@ class SessionsController extends Controller {
 
   public function actionSplit($id) {
     $currentSession = $this->findModel($id);
+    $splitForm = new SessionSplitForm();
 
-    $frameCounter = Yii::$app->request->post('frame_counter');
-    if ($frameCounter !== null) {
+    if ($splitForm->load(Yii::$app->request->post()) && $splitForm->validate()) {
       $frameCheck = Frame::find()->andWhere('count_up >= :count_up AND session_id = :session_id', [
-          'count_up' => $frameCounter,
+          'count_up' => $splitForm->frameCounter,
           'session_id' => $id
         ])->orderBy(['count_up' => SORT_ASC])->one();
       if ($frameCheck === null) {
         throw new \yii\web\HttpException(404, 'Frame not found');
       }
-
       $newSession = new Session();
       $newSession->device_id = $currentSession->device_id;
       $newSession->description = 'Split from session ' . $currentSession->id;
-      $newSession->type = $currentSession->type;
-      $newSession->latitude = $currentSession->latitude;
-      $newSession->longitude = $currentSession->longitude;
+      if ($splitForm->copyProperties) {
+        $newSession->type = $currentSession->type;
+        $newSession->vehicle_type = $currentSession->vehicle_type;
+        $newSession->motion_indicator = $currentSession->motion_indicator;
+        $newSession->location_id = $currentSession->location_id;
+        $newSession->latitude = $currentSession->latitude;
+        $newSession->longitude = $currentSession->longitude;
+      }
+
       if (!$newSession->save()) {
         throw new \yii\web\HttpException(500, 'Session not created: ' . json_encode($newSession->errors));
       }
@@ -187,11 +194,15 @@ class SessionsController extends Controller {
         'frame_counter' => $frameCheck->count_up
       ]);
 
+      $currentSession->updateProperties();
+      $newSession->updateProperties();
+
       return $this->redirect(['view', 'id' => $newSession->id]);
     }
 
     return $this->render('split', [
-        'model' => $currentSession
+        'model' => $currentSession,
+        'splitForm' => $splitForm
     ]);
   }
 

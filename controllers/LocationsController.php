@@ -1,58 +1,39 @@
 <?php
 
-/*  _  __  ____    _   _ 
- * | |/ / |  _ \  | \ | |
- * | ' /  | |_) | |  \| |
- * | . \  |  __/  | |\  |
- * |_|\_\ |_|     |_| \_|
- * 
- * (c) 2017 KPN
- * License: GNU General Public License v3.0
- * Author: Paul Marcelis
- * 
- */
-
 namespace app\controllers;
 
 use Yii;
-use app\models\Device;
-use app\models\DeviceSearch;
-use yii\filters\AccessControl;
+use app\models\Location;
+use app\models\LocationSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
 /**
- * DevicesController implements the CRUD actions for Device model.
+ * LocationsController implements the CRUD actions for Location model.
  */
-class DevicesController extends Controller {
+class LocationsController extends Controller {
 
+  /**
+   * @inheritdoc
+   */
   public function behaviors() {
     return [
-      'access' => [
-        'class' => AccessControl::className(),
-        'rules' => [
-          [
-            'allow' => true,
-            'roles' => ['@']
-          ]
-        ],
-      ],
       'verbs' => [
         'class' => VerbFilter::className(),
         'actions' => [
-          'delete' => ['post'],
+          'delete' => ['POST'],
         ],
-      ]
+      ],
     ];
   }
 
   /**
-   * Lists all Device models.
+   * Lists all Location models.
    * @return mixed
    */
   public function actionIndex() {
-    $searchModel = new DeviceSearch();
+    $searchModel = new LocationSearch();
     $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
     return $this->render('index', [
@@ -62,7 +43,7 @@ class DevicesController extends Controller {
   }
 
   /**
-   * Displays a single Device model.
+   * Displays a single Location model.
    * @param integer $id
    * @return mixed
    */
@@ -73,12 +54,12 @@ class DevicesController extends Controller {
   }
 
   /**
-   * Creates a new Device model.
+   * Creates a new Location model.
    * If creation is successful, the browser will be redirected to the 'view' page.
    * @return mixed
    */
   public function actionCreate() {
-    $model = new Device();
+    $model = new Location();
 
     if ($model->load(Yii::$app->request->post()) && $model->save()) {
       return $this->redirect(['view', 'id' => $model->id]);
@@ -89,25 +70,8 @@ class DevicesController extends Controller {
     }
   }
 
-  public function actionStats($id) {
-    $model = $this->findModel($id);
-
-    $sessionProps = \app\models\SessionProperties::find()
-      ->joinWith('session s', true, 'INNER JOIN')
-      ->andWhere('s.device_id = :device_id', ['device_id' => $id])
-      ->andWhere(['between', 'session_date_at', gmdate("Y-m-d H:i:s", time() - (60 * 60 * 24 * 30)), gmdate("Y-m-d H:i:s")])
-      ->all();
-
-    return $this->render('stats', [
-        'model' => $model,
-        'sessionProps' => array_map(function($data) {
-            return $data->attributes;
-          }, $sessionProps)
-    ]);
-  }
-
   /**
-   * Updates an existing Device model.
+   * Updates an existing Location model.
    * If update is successful, the browser will be redirected to the 'view' page.
    * @param integer $id
    * @return mixed
@@ -125,7 +89,7 @@ class DevicesController extends Controller {
   }
 
   /**
-   * Deletes an existing Device model.
+   * Deletes an existing Location model.
    * If deletion is successful, the browser will be redirected to the 'index' page.
    * @param integer $id
    * @return mixed
@@ -137,14 +101,14 @@ class DevicesController extends Controller {
   }
 
   /**
-   * Finds the Device model based on its primary key value.
+   * Finds the Location model based on its primary key value.
    * If the model is not found, a 404 HTTP exception will be thrown.
    * @param integer $id
-   * @return Device the loaded model
+   * @return Location the loaded model
    * @throws NotFoundHttpException if the model cannot be found
    */
   protected function findModel($id) {
-    if (($model = Device::findOne($id)) !== null) {
+    if (($model = Location::findOne($id)) !== null) {
       return $model;
     } else {
       throw new NotFoundHttpException('The requested page does not exist.');

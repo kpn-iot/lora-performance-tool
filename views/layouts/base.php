@@ -44,6 +44,7 @@ if (!Yii::$app->user->isGuest) {
         ]
       ],
       ['label' => 'Quick measurements', 'url' => ['/quick/index']],
+      ['label' => 'Locations', 'url' => ['/locations']],
       ['label' => 'Gateways', 'url' => ['/gateways']],
       ['label' => 'Tools', 'items' => [
           ['label' => 'Api log', 'url' => ['/log/index']],

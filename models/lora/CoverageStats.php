@@ -18,6 +18,7 @@ namespace app\models\lora;
  * @property integer $avgRssi
  * @property integer $avgGwCount
  * @property integer $avgSnr
+ * @property integer $avgEsp
  * @property array $sfUsage
  * @property array $channelUsage
  * @property array $gwCountPdf
@@ -29,12 +30,12 @@ class CoverageStats extends \yii\base\BaseObject {
 
   private $_frameCollection;
   private $_calculated = false;
-  private $_avgRssi, $_avgGwCount = null, $_avgSnr, $_sfUsage, $_channelUsage, $_gwCountPdf, $_gwColors, $_timeline, $_graphs, $noFrames = null;
+  private $_avgRssi, $_avgGwCount = null, $_avgSnr, $_avgEsp, $_sfUsage, $_channelUsage, $_gwCountPdf, $_gwColors, $_timeline, $_graphs, $noFrames = null;
   public static $colorList = ["#3366CC", "#DC3912", "#FF9900", "#109618", "#990099", "#3B3EAC", "#0099C6", "#DD4477", "#66AA00", "#B82E2E", "#316395", "#994499", "#22AA99", "#AAAA11", "#6633CC", "#E67300", "#8B0707", "#329262", "#5574A6", "#3B3EAC"];
 
   public function __construct(FrameCollection $frameCollection, $config = []) {
     $this->_frameCollection = $frameCollection;
-	$this->noFrames = ($frameCollection->nrFrames === 0);
+    $this->noFrames = ($frameCollection->nrFrames === 0);
     parent::__construct($config);
   }
 
@@ -48,6 +49,7 @@ class CoverageStats extends \yii\base\BaseObject {
     $this->_timeline = [];
     $strongestRssiList = [];
     $strongestSnrList = [];
+    $strongestEspList = [];
     $gatewayIdList = [];
     $receptionPerGateway = [];
 
@@ -59,7 +61,9 @@ class CoverageStats extends \yii\base\BaseObject {
         ($frame['channel'] != '') ? ((int) str_replace('LC', '', $frame['channel'])) : null
       ];
 
-      $this->_sfUsage[$frame['sf']] += 1;
+      if ($frame['sf'] != '') {
+        $this->_sfUsage[$frame['sf']] += 1;
+      }
       $this->_gwCountPdf[$frame['gateway_count']] += 1;
       if ($frame['channel'] != '') {
         $this->_channelUsage[$frame['channel']] += 1;
@@ -68,6 +72,7 @@ class CoverageStats extends \yii\base\BaseObject {
       if (count($frame['reception']) > 0) {
         $strongestRssiList[] = $frame['reception'][0]['rssi'];
         $strongestSnrList[] = $frame['reception'][0]['snr'];
+        $strongestEspList[] = $frame['reception'][0]['esp'];
       }
 
       foreach ($frame['reception'] as $reception) {
@@ -132,8 +137,9 @@ class CoverageStats extends \yii\base\BaseObject {
       $sf = round(100 * $sf / count($frames), 1);
     }
 
-    $this->_avgRssi = round(array_sum($strongestRssiList) / count($strongestRssiList), 2);
-    $this->_avgSnr = round(array_sum($strongestSnrList) / count($strongestSnrList), 2);
+    $this->_avgRssi = (count($strongestRssiList) === 0) ? null : round(array_sum($strongestRssiList) / count($strongestRssiList), 2);
+    $this->_avgSnr = (count($strongestSnrList) === 0) ? null : round(array_sum($strongestSnrList) / count($strongestSnrList), 2);
+    $this->_avgEsp = (count($strongestEspList) === 0) ? null : round(array_sum($strongestEspList) / count($strongestEspList), 2);
 
     $this->_calculated = true;
   }
@@ -189,9 +195,9 @@ class CoverageStats extends \yii\base\BaseObject {
 
   public function getAvgGwCount() {
     if ($this->_avgGwCount === null) {
-	  if ($this->noFrames) {
-		  return $this->_avgGwCount;
-	  }
+      if ($this->noFrames) {
+        return $this->_avgGwCount;
+      }
       $gwCountList = [];
       foreach ($this->_frameCollection->frames as $frame) {
         $gwCountList[] = $frame['gateway_count'];
@@ -206,6 +212,13 @@ class CoverageStats extends \yii\base\BaseObject {
       $this->calculate();
     }
     return $this->_avgSnr;
+  }
+
+  public function getAvgEsp() {
+    if (!$this->_calculated) {
+      $this->calculate();
+    }
+    return $this->_avgEsp;
   }
 
 }

@@ -32,27 +32,26 @@ if (!$hideDevice) {
 }
 
 $attributes = array_merge($attributes, [
+  'nrFrames',
   'frr',
-  'frrRel',
   [
-    'attribute' => 'frameCollection.coverage.avgGwCount',
+    'attribute' => 'avgGwCount',
     'label' => 'Avg. GW Count'
   ],
   [
-    'attribute' => 'frameCollection.geoloc.median',
     'label' => 'LocSolve Median Accuracy',
     'value' => function($data) {
-      if ($data->frameCollection->geoloc->median === null) {
+      if ($data->prop->geoloc_accuracy_median === null) {
         return null;
       }
-      return Yii::$app->formatter->asDistance($data->frameCollection->geoloc->median);
+      return Yii::$app->formatter->asDistance($data->prop->geoloc_accuracy_median);
     },
     'format' => 'raw'
   ],
   'locSolveSuccess:raw',
   [
     'label' => 'Last frame',
-    'attribute' => 'lastFrame.created_at',
+    'attribute' => 'prop.last_frame_at',
     'format' => 'dateTime'
   ],
   [
@@ -61,7 +60,7 @@ $attributes = array_merge($attributes, [
   ],
   [
     'label' => 'Last activity',
-    'attribute' => 'lastFrame.created_at',
+    'attribute' => 'prop.last_frame_at',
     'format' => 'timeAgo'
   ]
   ]);

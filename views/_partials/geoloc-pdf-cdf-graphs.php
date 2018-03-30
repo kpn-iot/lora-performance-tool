@@ -25,7 +25,7 @@ if (!isset($makePNG)) {
 <?php else: ?>
   <h3>LocSolve Accuracy Median: <?= Yii::$app->formatter->asDistance($stats->median) ?> 
     <small>
-      Average: <?= Yii::$app->formatter->asDistance($stats->average) ?> - 
+      Average: <?= Yii::$app->formatter->asDistance($stats->average) ?> (2D: <?= Yii::$app->formatter->asDistance($stats->average2D['distance']) ?> <b><?= \app\models\Frame::formatBearingArrow($stats->average2D['direction']) ?></b>) - 
       90% under: <?= Yii::$app->formatter->asDistance($stats->perc90point) ?> | 
       <?= Yii::$app->formatter->asDecimal($stats->nrLocalisations, 0) ?> LocSolves - 
       <?= Yii::$app->formatter->asDecimal($stats->percentageNrLocalisations * 100, 1) ?>% success

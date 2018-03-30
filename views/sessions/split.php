@@ -11,8 +11,12 @@
  * 
  */
 
+use app\helpers\Html;
+use yii\bootstrap\ActiveForm;
+
 /* @var $this yii\web\View */
 /* @var $model app\models\Session */
+/* @var $splitForm \app\models\SessionSplitForm */
 
 $this->title = "Split " . $model->name;
 $this->params['breadcrumbs'][] = ['label' => 'Devices', 'url' => ['/devices/index']];
@@ -22,16 +26,17 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="well">
-  Enter here the frame counter value (FCntUp) at which you want to start the new session:
-  <form method="POST">
-    <input id="form-token" type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>"/>
-    <p>
-      <input type="text" class="form-control" name="frame_counter" />
-    </p>
-    <p>
-      <input type="submit" class="btn btn-primary" value="Split session" />
-    </p>
-  </form>
+  <?php $form = ActiveForm::begin() ?>
+
+  <?= $form->field($splitForm, 'frameCounter')->hint('Enter here the frame counter value (FCntUp) at which you want to start the new session') ?>
+
+  <?= $form->field($splitForm, 'copyProperties')->checkbox() ?>
+
+  <div class="form-group">
+    <?= Html::submitButton($model->isNewRecord ? 'Create' : 'Update', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
+  </div>
+
+  <?php ActiveForm::end() ?>
 
 </div>
 

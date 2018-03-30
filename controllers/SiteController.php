@@ -63,7 +63,7 @@ class SiteController extends Controller {
 
   public function actionIndex() {
     return $this->render('index', [
-        'frontpageSessions' => Session::find()->orderBy(['created_at' => SORT_DESC])->with(['frames', 'frames.session', 'firstFrame', 'lastFrame', 'device'])->limit(4)->all()
+        'frontpageSessions' => Session::find()->orderBy(['p.last_frame_at' => SORT_DESC])->joinWith(['properties p', 'device'], true)->limit(4)->all()
     ]);
   }
 

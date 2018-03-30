@@ -23,7 +23,6 @@ use app\models\Reception;
 use app\models\Session;
 use yii\web\HttpException;
 use app\models\ApiLog;
-use app\components\LiveFeed;
 use Yii;
 
 class Ingestion {
@@ -89,6 +88,7 @@ class Ingestion {
         $session->type = $previousSession->type;
         $session->vehicle_type = $previousSession->vehicle_type;
         $session->motion_indicator = $previousSession->motion_indicator;
+        $session->location_id = $previousSession->location_id;
         $session->latitude = $previousSession->latitude;
         $session->longitude = $previousSession->longitude;
       } else {
@@ -106,6 +106,7 @@ class Ingestion {
       $lastFrame->latitude_lora = $previousFrameGeoloc->latitude;
       $lastFrame->longitude_lora = $previousFrameGeoloc->longitude;
       $lastFrame->location_age_lora = strtotime($lastFrame->time) - $previousFrameGeoloc->time;
+      $lastFrame->location_radius_lora = $previousFrameGeoloc->radius;
       $lastFrame->save();
       // $lastFrame is used later on
     }
@@ -155,6 +156,8 @@ class Ingestion {
         }
       }
     }
+    
+    $session->updateProperties();
 
     $data = [
       'frame' => $newFrame->getAttributes(['id', 'count_up', 'payload_hex', 'latitude', 'longitude', 'gateway_count', 'channel', 'sf', 'informationArray', 'time']),
@@ -174,7 +177,6 @@ class Ingestion {
     }
 
     $data['type'] = 'data';
-    LiveFeed::data($data);
     return $newFrame;
   }
 

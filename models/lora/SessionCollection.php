@@ -37,17 +37,17 @@ class SessionCollection extends \yii\base\BaseObject {
 
     $this->_name = [];
     $this->_description = [];
-    $this->_frr = ['scope' => 0, 'frr' => 0];
+    $this->_frr = ['scope' => 0, 'nrFrames' => 0];
     foreach ($this->_sessions as $session) {
       $this->_name[] = $session->name;
-      $this->_description[] = Html::a($session->name, ['/sessions/report-coverage', 'id' => $session->id]) . ": " . $session->frr . " frames of " . $session->scope . " received (" . $session->frrRel . ")";
+      $this->_description[] = Html::a($session->name, ['/sessions/report-coverage', 'id' => $session->id]) . ": " . $session->nrFrames . " frames of " . $session->scope . " received (" . $session->frr . ")";
       $this->_frr['scope'] += $session->scope;
-      $this->_frr['frr'] += $session->frr;
+      $this->_frr['nrFrames'] += $session->nrFrames;
       $frames = array_merge($frames, $session->frames);
     }
     $this->_name = implode(", ", $this->_name);
     $this->_description = "<ul><li>" . implode("</li><li>", $this->_description) . "</li></ul>";
-    $this->_frr['frrRel'] = ($this->_frr['scope'] == 0) ? null : round(100 * $this->_frr['frr'] / $this->_frr['scope'], 2) . "%";
+    $this->_frr['frr'] = ($this->_frr['scope'] == 0) ? null : round(100 * $this->_frr['nrFrames'] / $this->_frr['scope'], 2) . "%";
     $this->_frameCollection = new FrameCollection($frames);
 
     parent::__construct($config);

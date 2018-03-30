@@ -24,13 +24,15 @@ use app\helpers\ArrayHelper;
  * @property GeolocStats $geoloc
  * @property \app\models\Frame[][] $framesPerDevice
  * @property MapData $mapData
- * @property integer interval
- * @property integer sf
+ * @property integer $interval
+ * @property integer $sf
+ * @property integer $sfMax
+ * @property integer $sfMin
  */
 class FrameCollection extends \yii\base\BaseObject {
 
   private $_frames;
-  private $_framesPerDevice = null, $_nrDevices = null, $_nrFrames = null, $_coverage = null, $_geoloc, $_mapData = null, $_interval = false, $_sf = false;
+  private $_framesPerDevice = null, $_nrDevices = null, $_nrFrames = null, $_coverage = null, $_geoloc, $_mapData = null, $_interval = false, $_sf = false, $_sfMin, $_sfMax;
 
   public function __construct($frames, $config = []) {
     usort($frames, function($a, $b) {
@@ -94,14 +96,14 @@ class FrameCollection extends \yii\base\BaseObject {
     return $this->_framesPerDevice;
   }
 
-  public function getInterval() {
+  public function getInterval($formatted = true) {
     if ($this->_interval === false) {
-      $this->_interval = $this->_getInterval();
+      $this->_interval = $this->_getInterval($formatted);
     }
     return $this->_interval;
   }
 
-  private function _getInterval() {
+  private function _getInterval($formatted = true) {
     if ($this->nrDevices > 1) {
       return null;
     }
@@ -121,20 +123,36 @@ class FrameCollection extends \yii\base\BaseObject {
     $avg = ArrayHelper::getAverage($intervals);
     $var = ArrayHelper::getVariance($intervals);
 
-    if ($var / $avg < 0.05) {
-      $avg = round($avg);
-      if ($avg < 60) {
-        return $avg . 's';
+
+    if ((($avg == 0) ? 0 : ($var / $avg)) < 0.05) {
+      if (!$formatted) {
+        return round($avg); //s
       }
-      $avg = round($avg / 60);
-      if ($avg < 60) {
-        return $avg . 'm';
-      }
-      $avg = round($avg / 60);
-      return $avg . 'h';
+
+      return static::formatInterval($avg);
     } else {
+      if (!$formatted) {
+        return null;
+      }
       return 'Variable';
     }
+  }
+
+  public static function formatInterval($seconds) {
+    if ($seconds === null) {
+      return 'Variable';
+    }
+
+    $avg = round($seconds);
+    if ($avg < 60) {
+      return $avg . 's';
+    }
+    $avg = round($avg / 60);
+    if ($avg < 60) {
+      return $avg . 'm';
+    }
+    $avg = round($avg / 60);
+    return $avg . 'h';
   }
 
   public function getSf() {
@@ -144,7 +162,25 @@ class FrameCollection extends \yii\base\BaseObject {
     return $this->_sf;
   }
 
+  public function getSfMax() {
+    if ($this->_sf === false) {
+      $this->getSf();
+    }
+    return $this->_sfMax;
+  }
+
+  public function getSfMin() {
+    if ($this->_sf === false) {
+      $this->getSf();
+    }
+    return $this->_sfMin;
+  }
+
   private function _getSf() {
+    if ($this->nrFrames == 0) {
+      return null;
+    }
+
     $minSf = $this->frames[0]['sf'];
     $maxSf = $this->frames[0]['sf'];
     for ($i = 1; $i < count($this->frames); $i++) {
@@ -155,6 +191,9 @@ class FrameCollection extends \yii\base\BaseObject {
         $maxSf = $this->frames[$i]['sf'];
       }
     }
+
+    $this->_sfMin = $minSf;
+    $this->_sfMax = $maxSf;
 
     if ($minSf === $maxSf) {
       return $minSf;

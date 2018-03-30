@@ -80,5 +80,9 @@ DetailView::widget([
   </div>
 </div>
 
+<hr />
+</div>
+<div class="container-fluid">
+  <?= $this->render('/_partials/geoloc-table', ['frameCollection' => $sessionCollection->frameCollection]) ?>
 </div>
 <div class="container">

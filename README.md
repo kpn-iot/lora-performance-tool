@@ -27,6 +27,7 @@ For Windows [XAMPP](https://www.apachefriends.org/index.html) is an easy way to 
 * Use `config/users.php.example` as example to create the database users configuration file `config/users.php`
 * Set a cookieValidationKey in `config/web.php:27`
 * `$ ./yii migrate --interactive=0` - perform database migrations
+* (If you are upgrading from v1.0.2 to a higher version) `$ ./yii sessions/update-properties` to eager calculate the session properties cache table (can take some time if you have a lot of sessions)
 
 `$` indicates a command to be executed in the root folder of the project.
 

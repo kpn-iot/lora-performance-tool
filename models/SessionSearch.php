@@ -24,7 +24,6 @@ use app\models\Session;
  */
 class SessionSearch extends Session {
 
-  public static $lastActivitySort = '(SELECT created_at FROM frames WHERE session_id = sessions.id ORDER BY created_at DESC LIMIT 1)';
   public $idArray;
 
   /**
@@ -52,7 +51,7 @@ class SessionSearch extends Session {
   private function _filter(&$query, $deviceIds = null) {
     // grid filtering conditions
     $query->andFilterWhere([
-      'id' => (is_array($this->idArray)) ? $this->idArray : $this->id,
+      'sessions.id' => (is_array($this->idArray)) ? $this->idArray : $this->id,
       'device_id' => ($deviceIds !== null) ? $deviceIds : $this->device_id,
       'type' => $this->type,
       'vehicle_type' => $this->vehicle_type,
@@ -61,7 +60,7 @@ class SessionSearch extends Session {
       'updated_at' => $this->updated_at,
     ]);
 
-    $query->andFilterWhere(['like', 'description', $this->description]);
+    $query->andFilterWhere(['like', 'sessions.description', $this->description]);
   }
 
   /**
@@ -91,7 +90,7 @@ class SessionSearch extends Session {
    * @return ActiveDataProvider
    */
   public function search($params, $deviceIds = null) {
-    $query = Session::find()->with(['frames', 'device', 'firstFrame', 'lastFrame', 'frames.session']);
+    $query = Session::find()->joinWith(['properties p', 'device'], true);
 
     // add conditions that should always apply here
 
@@ -99,22 +98,31 @@ class SessionSearch extends Session {
       'query' => $query,
       'sort' => [
         'defaultOrder' => [
-          'lastActivity' => SORT_DESC
+          'lastFrame' => SORT_DESC
         ]
       ]
     ]);
 
-    $dataProvider->sort->attributes['lastActivity'] = [
-      'asc' => [static::$lastActivitySort => SORT_ASC],
-      'desc' => [static::$lastActivitySort => SORT_DESC],
-      'default' => SORT_DESC
+    $sorting = [
+      "countUpRange" => "p.nr_frames",
+      "interval" => "p.interval",
+      "sf" => "p.sf_min",
+      "prop.gateway_count_average" => "p.gateway_count_average",
+      "geolocStats" => "p.geoloc_accuracy_median",
+      "locSolveSuccess" => "p.geoloc_success_rate",
+      "frr" => "p.frame_reception_ratio",
+      "runtime" => "p.runtime",
+      "firstFrame" => "p.first_frame_at",
+      "lastFrame" => "p.last_frame_at"
     ];
 
-    $dataProvider->sort->attributes['firstFrame.created_at'] = [
-      'asc' => ['(SELECT created_at FROM frames WHERE session_id = sessions.id ORDER BY created_at ASC LIMIT 1)' => SORT_ASC],
-      'desc' => ['(SELECT created_at FROM frames WHERE session_id = sessions.id ORDER BY created_at ASC LIMIT 1)' => SORT_DESC],
-      'default' => SORT_DESC
-    ];
+    foreach ($sorting as $key => $value) {
+      $dataProvider->sort->attributes[$key] = [
+        'asc' => [$value => SORT_ASC],
+        'desc' => [$value => SORT_DESC],
+        'default' => SORT_DESC
+      ];
+    }
 
     $this->load($params);
 

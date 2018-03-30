@@ -26,7 +26,7 @@ if ($code) {
   $name .= " (#$code)";
 }
 
-if ($exception instanceof \yii\base\UserException) {
+if ($exception) {
   $message = $exception->getMessage();
 } else {
   $message = 'An internal server error occurred.';

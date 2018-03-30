@@ -59,7 +59,7 @@ $this->params['breadcrumbs'][] = 'Update';
 <h3>Sessions in set:</h3>
 <?=
 GridView::widget([
-  'dataProvider' => new ActiveDataProvider(['query' => $model->getSessions()->with(['device', 'lastFrame'])]),
+  'dataProvider' => new ActiveDataProvider(['query' => $model->getSessions()->with(['properties', 'device'])]),
   'columns' => [
     'id',
     [
@@ -80,7 +80,7 @@ GridView::widget([
     [
       'label' => 'Last activity',
       'attribute' => 'lastActivity',
-      'value' => 'lastFrame.created_at',
+      'value' => 'prop.last_frame_at',
       'format' => 'timeAgo'
     ],
     [

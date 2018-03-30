@@ -11,7 +11,7 @@
  * 
  */
 
-use yii\bootstrap\Html;
+use app\helpers\Html;
 use yii\grid\GridView;
 use app\components\data\Decoding;
 
@@ -69,14 +69,17 @@ $this->params['breadcrumbs'][] = $this->title;
         ],
         [
           'class' => 'yii\grid\ActionColumn',
-          'template' => '{live} {view} {update} {delete}',
+          'template' => '{stats} {live} {view} {update} {delete}',
           'buttons' => [
+            'stats' => function ($url, $model) {
+              return Html::a(Html::fa('line-chart'), ['stats', 'id' => $model->id]);
+            },
             'live' => function ($url, $model) {
               return Html::a(Html::icon('dashboard'), ['/data/dashboard', 'device_id' => $model->id]);
             }
           ],
           'options' => [
-            'style' => 'width:80px'
+            'style' => 'width:100px'
           ]
         ]
       ],

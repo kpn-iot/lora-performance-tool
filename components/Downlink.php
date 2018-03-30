@@ -46,7 +46,7 @@ class Downlink {
     }
     $queryString = rtrim($queryString, '&');
 
-    $hashIn = $queryString . $device->lrc_as_key;
+    $hashIn = $queryString . strtolower($device->lrc_as_key);
     $token = hash('sha256', $hashIn);
 
     $postUrl = $url . '?' . $queryString . '&Token=' . $token;

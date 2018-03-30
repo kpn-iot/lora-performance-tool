@@ -32,7 +32,7 @@ $this->params['breadcrumbs'][] = $this->title;
 <table id="w0" class="table table-striped table-bordered detail-view">
   <tbody>
     <tr><th>Description</th><td><?= $sessionCollection->description ?></td></tr>
-    <tr><th>Frame reception ratio</th><td><?= $sessionCollection->frr['frr'] ?> frames of <?= $sessionCollection->frr['scope'] ?> received. (<?= $sessionCollection->frr['frrRel'] ?>)</td></tr>
+    <tr><th>Frame reception ratio</th><td><?= $sessionCollection->frr['nrFrames'] ?> frames of <?= $sessionCollection->frr['scope'] ?> received. (<?= $sessionCollection->frr['frr'] ?>)</td></tr>
     <tr><th>Nr devices</th><td><?= $sessionCollection->frameCollection->nrDevices ?></td></tr>
     <tr><th>Average LocSolve Accuracy</th><td><?= Yii::$app->formatter->asDistance($sessionCollection->frameCollection->geoloc->average) ?></td></tr>
     <tr><th>Average LocSolve Success</th><td><?= round($sessionCollection->frameCollection->geoloc->percentageNrLocalisations * 100) ?>%</td></tr>

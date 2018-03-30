@@ -17,6 +17,12 @@ use yii\widgets\ActiveForm;
 /* @var $this yii\web\View */
 /* @var $model app\models\Session */
 /* @var $form yii\widgets\ActiveForm */
+
+$locationsRaw = app\models\Location::find()->orderBy(['name' => SORT_ASC])->all();
+$locations = [];
+foreach ($locationsRaw as $loc) {
+  $locations[$loc->id] = $loc->name;
+}
 ?>
 
 <div class="session-form">
@@ -26,6 +32,8 @@ use yii\widgets\ActiveForm;
   <?= $form->field($model, 'description')->textarea(['rows' => 6]) ?>
 
   <?= $form->field($model, 'type')->dropDownList($model::$typeOptions) ?>
+  
+  <?= $form->field($model, 'location_id')->dropDownList($locations, ['prompt' => 'Manual location']) ?>
 
   <div class="row" id="session-coordinates">
     <div class="col-sm-6">
@@ -47,9 +55,11 @@ use yii\widgets\ActiveForm;
   <?php ActiveForm::end(); ?>
   <script>
     $("#session-type").change(intfs);
+    $("#session-location_id").change(intfs);
     $(document).ready(intfs);
     function intfs() {
-      $("#session-coordinates").css("display", ($("#session-type").val() == 'static') ? 'block' : 'none');
+      $(".field-session-location_id").css("display", ($("#session-type").val() == 'static') ? 'block' : 'none');
+      $("#session-coordinates").css("display", ($("#session-type").val() == 'static' && $("#session-location_id").val() == '') ? 'block' : 'none');
     }
     ;
   </script>

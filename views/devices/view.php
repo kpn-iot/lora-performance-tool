@@ -34,6 +34,7 @@ $this->params['breadcrumbs'][] = $this->title;
       ],
     ])
     ?>
+    <?= Html::a('Stats', ['stats', 'id' => $model->id], ['class' => 'btn btn-link']) ?>
   </p>
 
   <?=

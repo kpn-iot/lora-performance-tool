@@ -1,43 +1,30 @@
 <?php
-/*  _  __  ____    _   _ 
- * | |/ / |  _ \  | \ | |
- * | ' /  | |_) | |  \| |
- * | . \  |  __/  | |\  |
- * |_|\_\ |_|     |_| \_|
- * 
- * (c) 2017 KPN
- * License: GNU General Public License v3.0
- * Author: Paul Marcelis
- * 
- */
 
-use yii\bootstrap\Html;
+use app\helpers\Html;
 use yii\widgets\DetailView;
 use yii\grid\GridView;
 use yii\helpers\Url;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\SessionSet */
+/* @var $model app\models\Location */
 
 $this->title = $model->name;
-$this->params['breadcrumbs'][] = ['label' => 'Session Sets', 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => 'Locations', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="session-set-view">
+<div class="location-view">
+
   <p>
-    <?= Html::a('Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary hidden-print']) ?>
+    <?= Html::a('Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
     <?=
     Html::a('Delete', ['delete', 'id' => $model->id], [
-      'class' => 'btn btn-danger hidden-print',
+      'class' => 'btn btn-danger',
       'data' => [
         'confirm' => 'Are you sure you want to delete this item?',
         'method' => 'post',
       ],
     ])
     ?>
-    <?= Html::a(Html::icon('stats') . ' Coverage report', ['report-coverage', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
-    <?= Html::a(Html::icon('equalizer') . ' Geoloc report', ['report-geoloc', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
-
   </p>
 
   <?=
@@ -46,15 +33,13 @@ $this->params['breadcrumbs'][] = $this->title;
     'attributes' => [
       'name',
       'description:ntext',
-      'created_at:dateTime',
-      'updated_at:dateTime',
+      'coordinates:coordinates',
+      'created_at:datetime',
+      'updated_at:datetime',
     ],
   ])
   ?>
 
-</div>
-</div>
-<div class="container-fluid">
   <h3>Sessions</h3>
   <?=
   GridView::widget([
@@ -75,7 +60,6 @@ $this->params['breadcrumbs'][] = $this->title;
         'value' => 'typeIcon',
         'format' => 'raw'
       ],
-	  'motionIndicatorReadable',
       [
         'attribute' => 'description',
         'format' => 'raw',
@@ -91,25 +75,13 @@ $this->params['breadcrumbs'][] = $this->title;
         }
       ],
       [
-        'label' => 'LocSolve Stats',
-        'attribute' => 'geolocStats',
-        'format' => 'raw',
+        'attribute' => 'locSolveAccuracy',
         'headerOptions' => [
-          'class' => 'text-right',
-          'style' => 'min-width: 140px'
+          'class' => 'text-right'
         ],
         'contentOptions' => [
           'class' => 'text-right'
-        ],
-        'value' => function($data) {
-          if ($data->prop->geoloc_accuracy_average === null) {
-            return null;
-          }
-          return "Median: <b>" . Yii::$app->formatter->asDistance($data->prop->geoloc_accuracy_median) . "</b><br />" .
-            "Average: " . Yii::$app->formatter->asDistance($data->prop->geoloc_accuracy_average) . "<br />" .
-            "90% under: " . Yii::$app->formatter->asDistance($data->prop->geoloc_accuracy_90perc) . "<br />" .
-            "2D Avg.: <b>" . \app\models\Frame::formatBearingArrow($data->prop->geoloc_accuracy_2d_direction) . "</b> " . Yii::$app->formatter->asDistance($data->prop->geoloc_accuracy_2d_distance);
-        }
+        ]
       ],
       [
         'attribute' => 'locSolveSuccess',
@@ -180,10 +152,5 @@ $this->params['breadcrumbs'][] = $this->title;
     ]
   ]);
   ?>
+
 </div>
-<script>
-  $(function () {
-    $('[data-toggle="popover"]').popover()
-  });
-</script>
-<div class="container">

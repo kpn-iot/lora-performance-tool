@@ -35,6 +35,9 @@ use app\helpers\Calc;
  * @property string $latitude_lora
  * @property string $longitude_lora
  * @property integer $location_age_lora
+ * @property string $location_radius_lora
+ * @property integer $distance
+ * @property integer $bearing
  * @property string $created_at
  * @property string $updated_at
  * @property integer $timestamp
@@ -148,6 +151,24 @@ class Frame extends ActiveRecord {
     return $this->hasOne(Session::className(), ['id' => 'session_id']);
   }
 
+  public function getLatDiff() {
+    if ($this->session->type == "static" && $this->session->latitude !== null && $this->session->longitude !== null) {
+      $latitude = $this->session->latitude;
+    } else {
+      $latitude = $this->latitude;
+    }
+    return $latitude - $this->latitude_lora;
+  }
+
+  public function getLonDiff() {
+    if ($this->session->type == "static" && $this->session->latitude !== null && $this->session->longitude !== null) {
+      $longitude = $this->session->longitude;
+    } else {
+      $longitude = $this->longitude;
+    }
+    return $longitude - $this->longitude_lora;
+  }
+
   public function getDistance() {
     if ($this->session->type == "static" && $this->session->latitude !== null && $this->session->longitude !== null) {
       $latitude = $this->session->latitude;
@@ -160,6 +181,48 @@ class Frame extends ActiveRecord {
       return null;
     }
     return Calc::coordinateDistance($latitude, $longitude, $this->latitude_lora, $this->longitude_lora);
+  }
+
+  public function getBearing() {
+    if ($this->session->type == "static" && $this->session->latitude !== null && $this->session->longitude !== null) {
+      $latitude = $this->session->latitude;
+      $longitude = $this->session->longitude;
+    } else {
+      $latitude = $this->latitude;
+      $longitude = $this->longitude;
+    }
+    if (($latitude == 0 && $longitude == 0) || ($latitude == null && $longitude == null) || ($this->latitude_lora == null && $this->longitude_lora == null)) {
+      return null;
+    }
+    return Calc::coordinateBearing($latitude, $longitude, $this->latitude_lora, $this->longitude_lora);
+  }
+
+  public function getBearingArrow() {
+    return static::formatBearingArrow($this->bearing);
+  }
+
+  public static function formatBearingArrow($bearing) {
+	  if ($bearing === null) {
+		  return null;
+	  }
+    $degrees = [
+      0 => "&uarr;",
+      45 => "&nearr;",
+      90 => "&rarr;",
+      135 => "&searr;",
+      180 => "&darr;",
+      225 => "&swarr;",
+      270 => "&larr;",
+      315 => "&nwarr;"
+    ];
+    foreach ($degrees as $deg => $arrow) {
+      $min = (360 + $deg - 22.5) % 360;
+      $max = ($deg + 22.5) % 360;
+      if (($deg === 0 && ($bearing >= $min || $bearing < $max)) || ($deg !== 0 && ($bearing >= $min && $bearing < $max))) {
+        return $arrow;
+      }
+    }
+    return null;
   }
 
   public function getReception() {

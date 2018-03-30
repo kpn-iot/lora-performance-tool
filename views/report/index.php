@@ -198,7 +198,7 @@ $info = [
           }
         ],
         [
-          'attribute' => 'frr',
+          'attribute' => 'nrFrames',
           'headerOptions' => [
             'class' => 'text-right'
           ],
@@ -225,7 +225,7 @@ $info = [
           ]
         ],
         [
-          'attribute' => 'frrRel',
+          'attribute' => 'frr',
           'headerOptions' => [
             'class' => 'text-right'
           ],

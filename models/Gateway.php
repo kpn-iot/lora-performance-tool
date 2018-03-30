@@ -52,7 +52,7 @@ class Gateway extends ActiveRecord {
   }
 
   public function delete() {
-    $this->deleted_at = date('Y-m-d H:i:s');
+    $this->deleted_at = gmdate('Y-m-d H:i:s');
     if (!$this->save()) {
       return false;
     }

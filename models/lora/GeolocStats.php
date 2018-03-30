@@ -15,9 +15,11 @@
 namespace app\models\lora;
 
 use app\models\Frame;
+use app\helpers\Calc;
 
 /**
  * @property integer $average
+ * @property array $average2D
  * @property integer $nrMeasurements
  * @property integer $nrLocalisations
  * @property integer $percentageNrLocalisations
@@ -31,7 +33,7 @@ use app\models\Frame;
 class GeolocStats extends \yii\base\BaseObject {
 
   private $_frameCollection, $_measurementFrames;
-  private $_average, $_nrMeasurements, $_nrLocalisations, $_percentageNrLocalisations, $_pdf = null, $_cdf = null, $_timeGraphs = null, $_perc90point = null, $_median = null, $_cdfCalculated = false, $_perGatewayCount = null;
+  private $_average, $_average2D, $_nrMeasurements, $_nrLocalisations, $_percentageNrLocalisations, $_pdf = null, $_cdf = null, $_timeGraphs = null, $_perc90point = null, $_median = null, $_cdfCalculated = false, $_perGatewayCount = null;
 
   public function __construct(FrameCollection $frameCollection, $config = []) {
     $this->_frameCollection = $frameCollection;
@@ -39,6 +41,8 @@ class GeolocStats extends \yii\base\BaseObject {
 
     $measurementCount = 0;
     $measurementSum = 0;
+    $measurementLatSum = 0;
+    $measurementLonSum = 0;
 
     $noNewLocalisationCount = 0;
     $localisationCount = 0;
@@ -71,18 +75,37 @@ class GeolocStats extends \yii\base\BaseObject {
       $this->_measurementFrames[] = $frame;
 
       $measurementCount += 1;
-      $measurementSum += $frame['distance'];
+
+      $dist = $frame['distance'];
+      $bearing = $frame['bearing'];
+
+	  if (!is_nan($bearing)) {
+        $latDiff = $dist * cos(deg2rad($bearing));
+        $lonDiff = $dist * sin(deg2rad($bearing));
+
+        $measurementLatSum += $latDiff;
+        $measurementLonSum += $lonDiff;
+	  }
+
+      $measurementSum += $dist;
     }
 
     $this->_nrMeasurements = $measurementCount; //correct gps + correct geoloc
     $this->_nrLocalisations = $localisationCount; //correct geoloc
-    $this->_percentageNrLocalisations = (($localisationCount + $noNewLocalisationCount) == 0) ? 0 : ($localisationCount / ($localisationCount + $noNewLocalisationCount));
+    $this->_percentageNrLocalisations = (($localisationCount + $noNewLocalisationCount) == 0) ? null : (($localisationCount) / ($localisationCount + $noNewLocalisationCount));
 
     if ($measurementCount === 0) {
       return;
     }
 
     $this->_average = ($measurementCount == 0) ? null : $measurementSum / $measurementCount;
+    $measurementLatSum /= $measurementCount;
+    $measurementLonSum /= $measurementCount;
+
+    $this->_average2D = [
+      'distance' => sqrt(pow($measurementLatSum, 2) + pow($measurementLonSum, 2)),
+      'direction' => (360 + rad2deg(atan2($measurementLonSum, $measurementLatSum))) % 360
+    ];
 
     usort($this->_measurementFrames, function($a, $b) {
       return $a['distance'] > $b['distance'];
@@ -124,6 +147,10 @@ class GeolocStats extends \yii\base\BaseObject {
 
   public function getAverage() {
     return $this->_average;
+  }
+
+  public function getAverage2D() {
+    return $this->_average2D;
   }
 
   public function getNrMeasurements() {
@@ -241,7 +268,7 @@ class GeolocStats extends \yii\base\BaseObject {
     }
     return $this->_perc90point;
   }
-  
+
   public function getPerGatewayCount() {
     return $this->_perGatewayCount;
   }

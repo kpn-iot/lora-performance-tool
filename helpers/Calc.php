@@ -24,6 +24,40 @@ class Calc {
     return static::vincentyGreatCircleDistance($latA, $lonA, $latB, $lonB);
   }
 
+  public static function coordinateBearing($latA, $lonA, $latB, $lonB) {
+    $vars = ['latA', 'lonA', 'latB', 'lonB'];
+    foreach ($vars as $var) {
+      $$var = (float) $$var;
+    }
+    return static::bearing($latA, $lonA, $latB, $lonB);
+  }
+
+  private static function bearing($lat1_d, $lon1_d, $lat2_d, $lon2_d) {
+
+    $lat1 = deg2rad($lat1_d);
+    $lon1 = deg2rad($lon1_d);
+    $lat2 = deg2rad($lat2_d);
+    $lon2 = deg2rad($lon2_d);
+
+    $L = $lon2 - $lon1;
+
+    $cosD = sin($lat1) * sin($lat2) + cos($lat1) * cos($lat2) * cos($L);
+    $D = acos($cosD);
+    $cosC = (sin($lat2) - $cosD * sin($lat1)) / (sin($D) * cos($lat1));
+
+    $C = 180.0 * acos($cosC) / pi();
+
+    if (sin($L) < 0.0) {
+      $C = 360.0 - $C;
+    }
+	
+	if (is_nan($C)) {
+		return null;
+	}
+
+    return $C;
+  }
+
   /**
    * Calculates the great-circle distance between two points, with
    * the Vincenty formula.

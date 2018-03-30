@@ -1,5 +1,17 @@
 <?php
 
+/*  _  __  ____    _   _ 
+ * | |/ / |  _ \  | \ | |
+ * | ' /  | |_) | |  \| |
+ * | . \  |  __/  | |\  |
+ * |_|\_\ |_|     |_| \_|
+ * 
+ * (c) 2018 KPN
+ * License: GNU General Public License v3.0
+ * Author: Paul Marcelis
+ * 
+ */
+
 use yii\db\Migration;
 
 /**

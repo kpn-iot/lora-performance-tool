@@ -169,6 +169,7 @@ class Quick extends ActiveRecord {
         'longitude_lora' => null,
         'location_time_lora' => null,
         'location_age_lora' => null,
+        'location_radius_lora' => null,
         'distance' => null,
         'time' => $data[2],
         'created_at' => $data[1],
@@ -207,13 +208,16 @@ class Quick extends ActiveRecord {
 
         if ($frame['latitude'] != null && $frame['longitude'] != null && $frame['latitude_lora'] != null && $frame['longitude_lora'] != null) {
           $frame['distance'] = Calc::coordinateDistance($frame['latitude'], $frame['longitude'], $frame['latitude_lora'], $frame['longitude_lora']);
+          $frame['bearing'] = Calc::coordinateBearing($frame['latitude'], $frame['longitude'], $frame['latitude_lora'], $frame['longitude_lora']);
+          $frame['bearingArrow'] = Frame::formatBearingArrow($frame['bearing']);
         }
       }
 
       $loraLocationTemp[$frame['device_eui']] = [
         'latitude_lora' => $data[18],
         'longitude_lora' => $data[19],
-        'location_time_lora' => $data[22]
+        'location_time_lora' => $data[22],
+        'location_radius_lora' => (($data[21]==='') ? null : $data[21])
       ];
 
       $frame['coordinates'] = Yii::$app->formatter->asCoordinates($frame['latitude'] . ', ' . $frame['longitude']);

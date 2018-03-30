@@ -40,6 +40,9 @@ $columns = [
     'attribute' => 'device_id',
     'filter' => Select2::widget(['name' => 'SessionSearch[device_id]', 'value' => $searchModel->device_id, 'data' => $devicesFilter, 'options' => ['placeholder' => '']]),
     'format' => 'raw',
+    'headerOptions' => [
+      'style' => 'min-width:150px'
+    ],
     'value' => function ($data) {
       return $data->device->name;
     }
@@ -84,7 +87,7 @@ $columns = [
   ],
   [
     'label' => 'Avg GW count',
-    'attribute' => 'frameCollection.coverage.avgGwCount',
+    'attribute' => 'avgGwCount',
     'headerOptions' => [
       'class' => 'text-right'
     ],
@@ -94,6 +97,7 @@ $columns = [
   ],
   [
     'label' => 'LocSolve Stats',
+    'attribute' => 'geolocStats',
     'format' => 'raw',
     'headerOptions' => [
       'class' => 'text-right',
@@ -103,10 +107,13 @@ $columns = [
       'class' => 'text-right'
     ],
     'value' => function($data) {
-      if ($data->frameCollection->geoloc->nrMeasurements === 0) {
+      if ($data->prop->geoloc_accuracy_average === null) {
         return null;
       }
-      return "Median: <b>" . Yii::$app->formatter->asDistance($data->frameCollection->geoloc->median) . "</b><br />Average: " . $data->locSolveAccuracy . "<br />90% under: " . Yii::$app->formatter->asDistance($data->frameCollection->geoloc->perc90point);
+      return "Median: <b>" . Yii::$app->formatter->asDistance($data->prop->geoloc_accuracy_median) . "</b><br />" .
+        "Average: " . Yii::$app->formatter->asDistance($data->prop->geoloc_accuracy_average) . "<br />" .
+        "90% under: " . Yii::$app->formatter->asDistance($data->prop->geoloc_accuracy_90perc) . "<br />" .
+        "2D Avg.: <b>" . \app\models\Frame::formatBearingArrow($data->prop->geoloc_accuracy_2d_direction) . "</b> " . Yii::$app->formatter->asDistance($data->prop->geoloc_accuracy_2d_distance);
     }
   ],
   [
@@ -119,7 +126,7 @@ $columns = [
     ]
   ],
   [
-    'attribute' => 'frrRel',
+    'attribute' => 'frr',
     'headerOptions' => [
       'class' => 'text-right'
     ],
@@ -138,15 +145,15 @@ $columns = [
   ],
   [
     'label' => 'First frame',
-    'attribute' => 'firstFrame.created_at',
+    'attribute' => 'firstFrame',
     'format' => 'raw',
     'value' => function ($data) {
-      if ($data->firstFrame === null) {
+      if ($data->prop->first_frame_at === null) {
         return null;
       }
-      return Yii::$app->formatter->asDatetime($data->firstFrame->created_at) .
+      return Yii::$app->formatter->asDatetime($data->prop->first_frame_at) .
         Html::tag('br') .
-        Html::tag('i', Yii::$app->formatter->asTimeago($data->firstFrame->created_at));
+        Html::tag('i', Yii::$app->formatter->asTimeago($data->prop->first_frame_at));
     },
     'headerOptions' => [
       'style' => 'width:160px'
@@ -154,15 +161,15 @@ $columns = [
   ],
   [
     'label' => 'Last frame',
-    'attribute' => 'lastActivity',
+    'attribute' => 'lastFrame',
     'format' => 'raw',
     'value' => function ($data) {
-      if ($data->lastFrame === null) {
+      if ($data->prop->last_frame_at === null) {
         return null;
       }
-      return Yii::$app->formatter->asDatetime($data->lastFrame->created_at) .
+      return Yii::$app->formatter->asDatetime($data->prop->last_frame_at) .
         Html::tag('br') .
-        Html::tag('i', Yii::$app->formatter->asTimeago($data->lastFrame->created_at));
+        Html::tag('i', Yii::$app->formatter->asTimeago($data->prop->last_frame_at));
     },
     'headerOptions' => [
       'style' => 'width:160px'

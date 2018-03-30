@@ -33,35 +33,35 @@ echo DetailView::widget([
     'countUpRange',
     'interval',
     'sf',
+    'nrFrames',
     'frr',
-    'frrRel',
     [
       'label' => 'Nr Devices',
       'value' => $model->frameCollection->nrDevices
     ],
     [
       'label' => 'Average gateway count',
-      'attribute' => 'frameCollection.coverage.avgGwCount'
+      'attribute' => 'avgGwCount'
     ],
     [
       'label' => 'Average RSSI',
-      'value' => $model->frameCollection->coverage->avgRssi . " dBm"
+      'value' => $model->prop->rssi_average . " dBm"
     ],
     [
       'label' => 'Average SNR',
-      'value' => $model->frameCollection->coverage->avgSnr . " dB"
+      'value' => $model->prop->snr_average . " dB"
     ],
     'created_at:timeAgo',
     'runtime',
     [
       'label' => 'First frame',
-      'attribute' => 'firstFrame.created_at',
-      'formatter' => 'dateTime'
+      'attribute' => 'prop.first_frame_at',
+      'formatter' => 'datetime'
     ],
     [
       'label' => 'Last frame',
-      'attribute' => 'lastFrame.created_at',
-      'formatter' => 'dateTime'
+      'attribute' => 'prop.last_frame_at',
+      'formatter' => 'datetime'
     ]
   ],
 ]);
