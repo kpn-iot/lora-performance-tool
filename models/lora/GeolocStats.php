@@ -167,9 +167,9 @@ class GeolocStats extends \yii\base\BaseObject {
 
   public function getPdf() {
     if ($this->_pdf === null) {
-      $pdfBinValues = [50, 100, 150, 200, 250, 300];
+      $pdfBinValues = [25, 50, 75, 100, 150, 200, 250, 300];
       $pdfBinSize = 100;
-      $pdfBinMax = 1500;
+      $pdfBinMax = 1000;
       for ($i = end($pdfBinValues) + $pdfBinSize; $i <= $pdfBinMax; $i += $pdfBinSize) {
         $pdfBinValues[] = $i;
       }

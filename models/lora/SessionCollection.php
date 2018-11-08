@@ -15,6 +15,9 @@
 namespace app\models\lora;
 
 use app\helpers\Html;
+use app\models\Gateway;
+use app\models\Session;
+use yii\base\BaseObject;
 
 /**
  * @property string $name
@@ -24,17 +27,17 @@ use app\helpers\Html;
  * @property \app\models\Session[] $sessions
  * @property string $idList
  * @property array $firstFrameLocSolveAccuracy
+ * @property boolean $isLarge
+ *
+ * @property Session[] $_sessions
  */
-class SessionCollection extends \yii\base\BaseObject {
+class SessionCollection extends BaseObject {
 
   static $nrFirstFrames = 20;
-  private $_sessions, $_name, $_description, $_frr, $_frameCollection, $_idList = null, $_firstFrameLocSolveAccuracy = null;
+  private $_sessions, $_name, $_description, $_frr, $_frameCollection = null, $_idList = null, $_firstFrameLocSolveAccuracy = null;
 
   public function __construct($sessions, $config = []) {
-
     $this->_sessions = $sessions;
-    $frames = [];
-
     $this->_name = [];
     $this->_description = [];
     $this->_frr = ['scope' => 0, 'nrFrames' => 0];
@@ -43,13 +46,10 @@ class SessionCollection extends \yii\base\BaseObject {
       $this->_description[] = Html::a($session->name, ['/sessions/report-coverage', 'id' => $session->id]) . ": " . $session->nrFrames . " frames of " . $session->scope . " received (" . $session->frr . ")";
       $this->_frr['scope'] += $session->scope;
       $this->_frr['nrFrames'] += $session->nrFrames;
-      $frames = array_merge($frames, $session->frames);
     }
     $this->_name = implode(", ", $this->_name);
     $this->_description = "<ul><li>" . implode("</li><li>", $this->_description) . "</li></ul>";
     $this->_frr['frr'] = ($this->_frr['scope'] == 0) ? null : round(100 * $this->_frr['nrFrames'] / $this->_frr['scope'], 2) . "%";
-    $this->_frameCollection = new FrameCollection($frames);
-
     parent::__construct($config);
   }
 
@@ -69,7 +69,23 @@ class SessionCollection extends \yii\base\BaseObject {
     return $this->_frr;
   }
 
+  public function getIsLarge() {
+    return $this->frameCollection->isLarge;
+  }
+
   public function getFrameCollection() {
+    if ($this->_frameCollection === null) {
+      /** @var BareFrame[] $frames */
+      $frames = [];
+      $bareFrameFactory = new BareFrameFactory();
+      foreach ($this->_sessions as $session) {
+        $sessionFrames = $session->getFrames()->with('reception')->asArray()->all();
+        foreach ($sessionFrames as $frame) {
+          $frames[] = $bareFrameFactory->create($frame, $session);
+        }
+      }
+      $this->_frameCollection = new FrameCollection($frames);
+    }
     return $this->_frameCollection;
   }
 

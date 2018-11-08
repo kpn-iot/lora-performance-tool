@@ -26,6 +26,7 @@ $frameCollection = $model->frameCollection;
 <p>
   <?= Html::a(Html::icon('equalizer') . ' Geoloc Report', ['report-geoloc', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
   <?= Html::a('Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary hidden-print']) ?>
+  <?= Html::a('Download file', ['file', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']); ?>
 </p>
 
 <?= $this->render('_detail', ['model' => $model]) ?>

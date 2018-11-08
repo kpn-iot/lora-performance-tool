@@ -14,19 +14,22 @@
 
 namespace app\controllers;
 
+use app\components\WordExport;
+use app\helpers\Html;
 use app\models\Device;
+use app\models\forms\SessionMergeForm;
 use app\models\Frame;
-use Yii;
+use app\models\lora\SessionCollection;
 use app\models\Session;
 use app\models\SessionSearch;
 use app\models\SessionSet;
 use app\models\SessionSplitForm;
+use Yii;
 use yii\base\ErrorException;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use app\models\lora\SessionCollection;
 
 /**
  * SessionsController implements the CRUD actions for Session model.
@@ -38,21 +41,21 @@ class SessionsController extends Controller {
    */
   public function behaviors() {
     return [
-      'access' => [
-        'class' => AccessControl::className(),
-        'rules' => [
-          [
-            'allow' => true,
-            'roles' => ['@']
-          ]
+        'access' => [
+            'class' => AccessControl::className(),
+            'rules' => [
+                [
+                    'allow' => true,
+                    'roles' => ['@']
+                ]
+            ],
         ],
-      ],
-      'verbs' => [
-        'class' => VerbFilter::className(),
-        'actions' => [
-          'delete' => ['POST'],
+        'verbs' => [
+            'class' => VerbFilter::className(),
+            'actions' => [
+                'delete' => ['POST'],
+            ],
         ],
-      ],
     ];
   }
 
@@ -76,9 +79,9 @@ class SessionsController extends Controller {
         'dataProvider' => $dataProvider,
         'model' => ($device_id != null) ? Device::findOne($device_id) : null,
         'devicesFilter' => $devicesFilter,
-        'sessionSets' => array_map(function($item) {
-            return $item->name;
-          }, SessionSet::find()->orderBy(['name' => SORT_ASC])->indexBy('id')->all())
+        'sessionSets' => array_map(function ($item) {
+          return $item->name;
+        }, SessionSet::find()->orderBy(['name' => SORT_ASC])->indexBy('id')->all())
     ]);
   }
 
@@ -88,6 +91,107 @@ class SessionsController extends Controller {
 
   public function actionView($id) {
     return $this->redirect(['report-coverage', 'id' => $id]);
+  }
+
+  public function actionMerge() {
+    $sessionMerge = new SessionMergeForm();
+
+    if ($sessionMerge->load(Yii::$app->request->post()) && $sessionMerge->validate()) {
+      $sessionMerge->execute();
+      Yii::$app->session->setFlash('success', 'Sessions have been merged. ' . Html::a('Go to the freshly merged session', ['view', 'id' => $sessionMerge->targetSessionId]) . '.');
+      return $this->refresh();
+    }
+
+    return $this->render('merge', [
+        'sessionMerge' => $sessionMerge
+    ]);
+  }
+
+  public function actionExport($id) {
+    /** @var Session $session */
+    $session = $this->sessionBaseFind()->andWhere(['id' => $id])->one();
+
+    $doc = new WordExport('Export ' . $session->name);
+
+    $doc->addTitle($session->name, 0);
+    $doc->addText('This report has been exported on ' . Yii::$app->formatter->asDate(time(), 'dd-MM-yyyy') . '.');
+
+    $doc->addTitle('General', 1);
+    $doc->addInfoTable([
+        'Device' => $session->device->name,
+        'Motion indicator' => $session->motionIndicatorReadable,
+        'Measurement type' => $session->typeReadable,
+        'Vehicle type' => $session->vehicleTypeReadable,
+        'Number of frames' => Yii::$app->formatter->asInteger($session->nrFrames),
+        'Frame counter range' => $session->countUpRange,
+        'First frame at' => Yii::$app->formatter->asDatetime($session->prop->first_frame_at),
+        'Last frame at' => Yii::$app->formatter->asDatetime($session->prop->last_frame_at),
+        'Runtime of test' => $session->runtime,
+    ]);
+
+    // Coverage
+    $doc->addTitle('Coverage', 1);
+    $doc->addText('In this section the general LoRa performance is assessed.');
+    $doc->addInfoTable([
+        'Frame reception ratio' => $session->frr,
+        'Used spreading factor' => $session->sf,
+        'Average RSSI' => $session->prop->rssi_average . ' dBm',
+        'Average SNR' => $session->prop->snr_average . ' dB',
+        'Average ESP' => $session->prop->esp_average . ' dBm',
+    ]);
+
+    $doc->addTitle('Gateway count', 2);
+    $doc->addText('The average gateway count is ' . $session->avgGwCount . '.');
+    $doc->addColumnChart($session->frameCollection->coverage->gwCountPdf);
+
+    $doc->addTitle('Spreading factor usage', 2);
+    $info = $session->frameCollection->coverage->sfUsage;
+    $values = [];
+    $averageSf = 0;
+    foreach ($info as $key => $value) {
+      $values['SF' . $key] = $value;
+      $averageSf += (($key * $value) / 100);
+    }
+    $doc->addText('The average spreading factor is SF' . (($averageSf == round($averageSf)) ? $averageSf : Yii::$app->formatter->asDecimal($averageSf, 1)));
+    $doc->addColumnChart($values);
+
+    $doc->addTitle('Channel occurrence', 2);
+    $doc->addColumnChart($session->frameCollection->coverage->channelUsage);
+
+    if ($session->frameCollection->geoloc->nrMeasurements === 0) {
+      $doc->end();
+    }
+    $stats = $session->frameCollection->geoloc;
+
+    $doc->addTitle('Geolocation', 1);
+    $doc->addInfoTable([
+        'Nr LocSolves' => Yii::$app->formatter->asDecimal($stats->nrLocalisations, 0)
+    ]);
+
+    $doc->addTitle('Accuracy', 2);
+    $doc->addInfoTable([
+        'Median accuracy' => Yii::$app->formatter->asDistance($stats->median),
+        'Average accuracy' => Yii::$app->formatter->asDistance($stats->average),
+        '2D accuracy' => Yii::$app->formatter->asDistance($stats->average2D['distance']) . ' ' . Frame::bearingText($stats->average2D['direction']),
+        '90% of solves under' => Yii::$app->formatter->asDistance($stats->perc90point)
+    ]);
+
+    $doc->addText('Probability density function of the geolocation accuracy.');
+    $doc->addColumnChart($stats->pdf);
+
+    $doc->addTitle('Success rate', 2);
+    $doc->addText('The Geolocation success rate is ' . Yii::$app->formatter->asPercent($stats->percentageNrLocalisations, 1) . '.');
+    $tableCells = [
+        ['GW Count', 'Frames', 'LocSolves', 'Success rate']
+    ];
+    foreach ($stats->perGatewayCount as $gwCount => $info) {
+      $tableCells[] = [$gwCount, $info['count'], $info['locsolves'],
+          ($info['count'] === 0) ? '-' : Yii::$app->formatter->asPercent($info['locsolves'] / $info['count'], 0)];
+    }
+    $doc->addTable($tableCells);
+
+
+    $doc->end();
   }
 
   public function actionReportCoverage($id) {
@@ -169,7 +273,7 @@ class SessionsController extends Controller {
       $frameCheck = Frame::find()->andWhere('count_up >= :count_up AND session_id = :session_id', [
           'count_up' => $splitForm->frameCounter,
           'session_id' => $id
-        ])->orderBy(['count_up' => SORT_ASC])->one();
+      ])->orderBy(['count_up' => SORT_ASC])->one();
       if ($frameCheck === null) {
         throw new \yii\web\HttpException(404, 'Frame not found');
       }
@@ -190,8 +294,8 @@ class SessionsController extends Controller {
       }
 
       Frame::updateAll(['session_id' => $newSession->id], 'session_id = :session_id AND count_up >= :frame_counter', [
-        'session_id' => $currentSession->id,
-        'frame_counter' => $frameCheck->count_up
+          'session_id' => $currentSession->id,
+          'frame_counter' => $frameCheck->count_up
       ]);
 
       $currentSession->updateProperties();

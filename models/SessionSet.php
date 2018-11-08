@@ -65,7 +65,8 @@ class SessionSet extends ActiveRecord {
       'sessionCollection.frameCollection.nrDevices' => 'Nr Devices',
       'sessionCollection.frameCollection.coverage.avgGwCount' => 'Average GW Count',
       'sessionCollection.frameCollection.coverage.avgRssi' => 'Average RSSI',
-      'sessionCollection.frameCollection.coverage.avgSnr' => 'Average SNR'
+      'sessionCollection.frameCollection.coverage.avgSnr' => 'Average SNR',
+      'sessionCollection.frameCollection.nrFrames' => 'Nr Frames'
     ];
   }
 
@@ -101,7 +102,8 @@ class SessionSet extends ActiveRecord {
 
   public function getSessionCollection() {
     if ($this->_sessionCollection === null) {
-      $sessions = $this->getSessions()->with(['device', 'frames', 'lastFrame', 'firstFrame', 'frames.session', 'frames.session.device', 'frames.reception', 'frames.reception.gateway', 'frames.reception.frame', 'frames.reception.frame.session'])->all();
+//      $sessions = $this->getSessions()->with(['device', 'frames', 'lastFrame', 'firstFrame', 'frames.session', 'frames.session.device', 'frames.reception', 'frames.reception.gateway', 'frames.reception.frame', 'frames.reception.frame.session'])->all();
+      $sessions = $this->getSessions()->with(['device'])->all();
       $this->_sessionCollection = new lora\SessionCollection($sessions);
     }
     return $this->_sessionCollection;

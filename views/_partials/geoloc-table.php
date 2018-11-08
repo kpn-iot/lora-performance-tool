@@ -82,7 +82,7 @@ $frames = $frameCollection->frames;
                           <td><?= $frame['device_eui'] ?></td>
                       <?php endif ?>
                         <td class="text-right"><?= $i ?></td>
-                        <td colspan="16"></td>
+                        <td colspan="17"></td>
                     </tr>
             <?php endfor ?>
           <?php endif ?>
@@ -107,7 +107,7 @@ $frames = $frameCollection->frames;
               <?php if (count($frame['reception']) > 0): ?>
                 <?php $reception = $frame['reception'][0]; ?>
                   <td class="text-right"><?= $reception['lrrId'] ?></td>
-                  <td class="text-right"><?= $reception['distance'] ?></td>
+                  <td class="text-right"><?= Yii::$app->formatter->asDistance($reception['distance']) ?></td>
                   <td class="text-right"><?= $reception['rssi'] ?></td>
                   <td class="text-right"><?= $reception['snr'] ?></td>
                   <td class="text-right"><?= $reception['esp'] ?></td>

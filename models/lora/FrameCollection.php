@@ -15,6 +15,8 @@
 namespace app\models\lora;
 
 use app\helpers\ArrayHelper;
+use app\models\Frame;
+use yii\base\BaseObject;
 
 /**
  * @property \app\models\Frame[] $frames
@@ -28,12 +30,21 @@ use app\helpers\ArrayHelper;
  * @property integer $sf
  * @property integer $sfMax
  * @property integer $sfMin
+ * @property integer $isLarge
  */
-class FrameCollection extends \yii\base\BaseObject {
+class FrameCollection extends BaseObject {
 
+  static $largeThreshold = 2000;
+
+  /** @var BareFrame[] $_frames */
   private $_frames;
   private $_framesPerDevice = null, $_nrDevices = null, $_nrFrames = null, $_coverage = null, $_geoloc, $_mapData = null, $_interval = false, $_sf = false, $_sfMin, $_sfMax;
 
+  /**
+   * FrameCollection constructor.
+   * @param Frame[]|BareFrame[] $frames
+   * @param array $config
+   */
   public function __construct($frames, $config = []) {
     usort($frames, function($a, $b) {
       return $a['timestamp'] - $b['timestamp'];
@@ -59,6 +70,10 @@ class FrameCollection extends \yii\base\BaseObject {
       $this->_geoloc = new GeolocStats($this);
     }
     return $this->_geoloc;
+  }
+
+  public function getIsLarge() {
+    return ($this->nrFrames > static::$largeThreshold);
   }
 
   public function getNrDevices() {

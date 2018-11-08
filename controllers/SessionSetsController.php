@@ -14,14 +14,18 @@
 
 namespace app\controllers;
 
-use Yii;
-use app\models\SessionSet;
-use app\models\SessionSetSearch;
-use yii\web\Controller;
-use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
-use app\models\SessionSetLink;
+use app\components\WordExport;
+use app\models\Frame;
 use app\models\Session;
+use app\models\SessionSet;
+use app\models\SessionSetLink;
+use app\models\SessionSetSearch;
+use Yii;
+use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
+use yii\web\Controller;
+use yii\web\HttpException;
+use yii\web\NotFoundHttpException;
 
 /**
  * SessionSetsController implements the CRUD actions for SessionSet model.
@@ -33,21 +37,21 @@ class SessionSetsController extends Controller {
    */
   public function behaviors() {
     return [
-      'access' => [
-        'class' => \yii\filters\AccessControl::className(),
-        'rules' => [
-          [
-            'allow' => true,
-            'roles' => ['@']
-          ]
-        ]
-      ],
-      'verbs' => [
-        'class' => VerbFilter::className(),
-        'actions' => [
-          'delete' => ['POST'],
+        'access' => [
+            'class' => AccessControl::className(),
+            'rules' => [
+                [
+                    'allow' => true,
+                    'roles' => ['@']
+                ]
+            ]
         ],
-      ],
+        'verbs' => [
+            'class' => VerbFilter::className(),
+            'actions' => [
+                'delete' => ['POST'],
+            ],
+        ],
     ];
   }
 
@@ -74,6 +78,92 @@ class SessionSetsController extends Controller {
     return $this->render('view', [
         'model' => $this->findModel($id),
     ]);
+  }
+
+  public function actionExport($id) {
+    $sessionSet = $this->findModel($id);
+    $sessionCollection = $sessionSet->sessionCollection;
+    $frameCollection = $sessionCollection->frameCollection;
+
+    $name = 'Set ' . $sessionSet->name;
+
+    $doc = new WordExport('Export ' . $name);
+
+    $doc->addTitle($name, 0);
+    $doc->addText('This report has been exported on ' . Yii::$app->formatter->asDate(time(), 'dd-MM-yyyy') . '.');
+
+    if ($sessionSet->description != null) {
+      $doc->addText($sessionSet->description);
+    }
+
+    $doc->addTitle('General', 1);
+    $doc->addInfoTable([
+        'Nr devices' => $frameCollection->nrDevices,
+        'Number of frames' => Yii::$app->formatter->asInteger($frameCollection->nrFrames)
+    ]);
+
+    // Coverage
+    $doc->addTitle('Coverage', 1);
+    $doc->addText('In this section the general LoRa performance is assessed.');
+    $doc->addInfoTable([
+        'Frame reception ratio' => $sessionCollection->frr['frr'],
+        'Average RSSI' => $frameCollection->coverage->avgRssi . ' dBm',
+        'Average SNR' => $frameCollection->coverage->avgSnr . ' dB',
+        'Average ESP' => $frameCollection->coverage->avgEsp . ' dBm',
+    ]);
+
+    $doc->addTitle('Gateway count', 2);
+    $doc->addText('The average gateway count is ' . $frameCollection->coverage->avgGwCount . '.');
+    $doc->addColumnChart($frameCollection->coverage->gwCountPdf);
+
+    $doc->addTitle('Spreading factor usage', 2);
+    $info = $frameCollection->coverage->sfUsage;
+    $values = [];
+    $averageSf = 0;
+    foreach ($info as $key => $value) {
+      $values['SF' . $key] = $value;
+      $averageSf += (($key * $value) / 100);
+    }
+    $doc->addText('The average spreading factor is SF' . (($averageSf == round($averageSf)) ? $averageSf : Yii::$app->formatter->asDecimal($averageSf, 1)));
+    $doc->addColumnChart($values);
+
+    $doc->addTitle('Channel occurrence', 2);
+    $doc->addColumnChart($frameCollection->coverage->channelUsage);
+
+    if ($frameCollection->geoloc->nrMeasurements === 0) {
+      $doc->end();
+    }
+    $stats = $frameCollection->geoloc;
+
+    $doc->addTitle('Geolocation', 1);
+    $doc->addInfoTable([
+        'Nr LocSolves' => Yii::$app->formatter->asDecimal($stats->nrLocalisations, 0)
+    ]);
+
+    $doc->addTitle('Accuracy', 2);
+    $doc->addInfoTable([
+        'Median accuracy' => Yii::$app->formatter->asDistance($stats->median),
+        'Average accuracy' => Yii::$app->formatter->asDistance($stats->average),
+        '2D accuracy' => Yii::$app->formatter->asDistance($stats->average2D['distance']) . ' ' . Frame::bearingText($stats->average2D['direction']),
+        '90% of solves under' => Yii::$app->formatter->asDistance($stats->perc90point)
+    ]);
+
+    $doc->addText('Probability density function of the geolocation accuracy.');
+    $doc->addColumnChart($stats->pdf);
+
+    $doc->addTitle('Success rate', 2);
+    $doc->addText('The Geolocation success rate is ' . Yii::$app->formatter->asPercent($stats->percentageNrLocalisations, 1) . '.');
+    $tableCells = [
+        ['GW Count', 'Frames', 'LocSolves', 'Success rate']
+    ];
+    foreach ($stats->perGatewayCount as $gwCount => $info) {
+      $tableCells[] = [$gwCount, $info['count'], $info['locsolves'],
+          ($info['count'] === 0) ? '-' : Yii::$app->formatter->asPercent($info['locsolves'] / $info['count'], 0)];
+    }
+    $doc->addTable($tableCells);
+
+
+    $doc->end();
   }
 
   public function actionReportCoverage($id) {
@@ -190,13 +280,13 @@ class SessionSetsController extends Controller {
     $session_id = Yii::$app->request->post('session_id');
     $set_id = Yii::$app->request->post('set_id');
     if ($session_id === null || $set_id === null) {
-      throw new \yii\web\HttpException(404, 'Session or set not found');
+      throw new HttpException(404, 'Session or set not found');
     }
 
     $set = $this->findModel($set_id);
     $session = Session::findOne($session_id);
     if ($session === null) {
-      throw new \yii\web\HttpException(404, 'Session not found');
+      throw new HttpException(404, 'Session not found');
     }
 
     $newLink = new SessionSetLink();
@@ -217,7 +307,7 @@ class SessionSetsController extends Controller {
   public function actionDeleteLink($session_id, $set_id, $from = null) {
     $link = SessionSetLink::find()->andWhere(['session_id' => $session_id, 'set_id' => $set_id])->one();
     if ($link === null) {
-      throw new \yii\web\HttpException(404, 'Link not found');
+      throw new HttpException(404, 'Link not found');
     }
 
     if ($link->delete()) {

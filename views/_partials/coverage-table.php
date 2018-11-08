@@ -74,8 +74,8 @@ $gatewayColors = $frameCollection->coverage->gwColors;
           for ($i = 0; $i < count($frame['reception']); $i++):
             $reception = $frame['reception'][$i];
             ?>
-            <td class="text-right" style="background-color:<?= $gatewayColors[$reception['lrrId']] ?>;color:#fff"><?= $reception['lrrId'] ?></td>
-            <td class="text-right"><?= $reception['distance'] ?></td>
+            <td class="text-right" style="background-color:<?= (isset($gatewayColors[$reception['lrrId']])) ? $gatewayColors[$reception['lrrId']] : '#666666' ?>;color:#fff"><?= $reception['lrrId'] ?></td>
+            <td class="text-right"><?= Yii::$app->formatter->asDistance($reception['distance']) ?></td>
             <td class="text-right"><?= $reception['rssi'] ?></td>
             <td class="text-right"><?= $reception['snr'] ?></td>
             <td class="text-right"><?= $reception['esp'] ?></td>

@@ -40,7 +40,7 @@ if (!Yii::$app->user->isGuest) {
           ['label' => 'Session Sets', 'url' => ['/session-sets']],
           ['label' => 'Sessions', 'url' => ['/sessions']],
           ['label' => 'Frames', 'url' => ['/frames']],
-          ['label' => 'GeoLoc Report', 'url' => ['/report']]
+          ['label' => 'Report', 'url' => ['/report']]
         ]
       ],
       ['label' => 'Quick measurements', 'url' => ['/quick/index']],
@@ -50,6 +50,7 @@ if (!Yii::$app->user->isGuest) {
           ['label' => 'Api log', 'url' => ['/log/index']],
           ['label' => 'User log', 'url' => ['/log/users']],
           ['label' => 'Downlink', 'url' => ['/data/downlink']],
+          ['label' => 'Merge sessions', 'url' => ['/sessions/merge']],
           ['label' => 'Update payload decoding', 'url' => ['/site/payload-fixing']]
         ]
       ],

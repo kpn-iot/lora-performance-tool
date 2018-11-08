@@ -97,12 +97,11 @@ class Reception extends ActiveRecord {
       $frameLon = $this->frame->longitude;
     }
     if ($frameLat === null) {
-      $distance = '';
-    } elseif ($this->gateway->latitude == 0) {
-      $distance = '?';
+      $distance = null;
+    } elseif ($this->gateway->latitude == 0 || $this->gateway->longitude == 0) {
+      $distance = null;
     } else {
       $distance = Calc::coordinateDistance($frameLat, $frameLon, $this->gateway->latitude, $this->gateway->longitude);
-      $distance = Yii::$app->formatter->asDecimal($distance, 0);
     }
     return $distance;
   }

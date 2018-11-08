@@ -13,7 +13,6 @@
 
 use app\helpers\Html;
 use yii\grid\GridView;
-use yii\widgets\Pjax;
 
 /* @var $this yii\web\View */
 /* @var $searchModel app\models\SessionSetSearch */
@@ -26,7 +25,6 @@ $this->params['breadcrumbs'][] = $this->title;
   <p>
     <?= Html::a('Create Session Set', ['create'], ['class' => 'btn btn-success']) ?>
   </p>
-  <?php Pjax::begin(); ?>
   <?=
   GridView::widget([
     'dataProvider' => $dataProvider,
@@ -40,9 +38,9 @@ $this->params['breadcrumbs'][] = $this->title;
       'updated_at:dateTime',
       [
         'class' => 'yii\grid\ActionColumn',
-        'template' => '{view} {coverage} {geoloc} {update} {delete}',
+        'template' => '{view} {coverage} {geoloc} {update} {export} {delete}',
         'options' => [
-          'width' => '100px'
+          'width' => '120px'
         ],
         'buttons' => [
           'coverage' => function ($url, $model) {
@@ -50,11 +48,13 @@ $this->params['breadcrumbs'][] = $this->title;
           },
           'geoloc' => function ($url, $model) {
             return Html::a(Html::icon('equalizer'), ['report-geoloc', 'id' => $model->id]);
-          }
+          },
+            'export' => function ($url, $model) {
+              return Html::a(Html::icon('export'), ['export', 'id' => $model->id]);
+            }
         ]
       ]
     ],
   ]);
   ?>
-  <?php Pjax::end(); ?>
 </div>

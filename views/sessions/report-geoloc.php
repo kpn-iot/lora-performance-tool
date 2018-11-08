@@ -27,40 +27,41 @@ $this->params['breadcrumbs'][] = $this->title;
   <?= Html::a(Html::icon('stats') . ' Coverage Report', ['/sessions/report-coverage', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
   <?= Html::a(Html::icon('map-marker') . ' Map', ['/map/index', 'session_id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
   <?= Html::a(Html::icon('list') . ' Frames', ['/frames/index', 'FrameSearch[session_id]' => $model->id], ['class' => 'btn btn-link hidden-print']); ?>
+  <?= Html::a(Html::icon('export') . ' Export', ['export', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
   <?= Html::a(Html::icon('pencil') . ' Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary hidden-print']) ?>
   <?= Html::a(Html::icon('resize-full') . ' Split', ['split', 'id' => $model->id], ['class' => 'btn btn-default hidden-print']) ?>
   <?=
   Html::a(Html::icon('trash') . ' Delete', ['delete', 'id' => $model->id], [
-    'class' => 'btn btn-danger hidden-print',
-    'data' => [
-      'confirm' => 'Are you sure you want to delete this item?',
-      'method' => 'post',
-    ],
+      'class' => 'btn btn-danger hidden-print',
+      'data' => [
+          'confirm' => 'Are you sure you want to delete this item?',
+          'method' => 'post',
+      ],
   ])
   ?>
 </p>
 <div class="row">
-  <div class="col-sm-6">
-    <?= $this->render('_detail', ['model' => $model]) ?>
-  </div>
-  <div class="col-sm-6" style="height:409px">
-    <?= Html::a($this->render('/map/small', ['session_id' => $model->id]), ['/map/index', 'session_id' => $model->id]) ?>
-  </div>
+    <div class="col-sm-6">
+      <?= $this->render('_detail', ['model' => $model]) ?>
+    </div>
+    <div class="col-sm-6" style="height:409px">
+      <?= Html::a($this->render('/map/small', ['session_id' => $model->id]), ['/map/index', 'session_id' => $model->id]) ?>
+    </div>
 </div>
 
 
-<hr />
+<hr/>
 <?= $this->render('/_partials/geoloc-pdf-cdf-graphs', ['stats' => $model->frameCollection->geoloc]) ?>
-<hr />
+<hr/>
 <div class="row">
-  <div class="col-sm-9">
-    <?= $this->render('/_partials/geoloc-time-graph', ['frameCollection' => $model->frameCollection]) ?>
-  </div>
-  <div class="col-sm-3">
-    <?= $this->render('/_partials/geoloc-per-gateway-count-table', ['geolocStats' => $model->frameCollection->geoloc]) ?>
-  </div>
+    <div class="col-sm-9">
+      <?= $this->render('/_partials/geoloc-time-graph', ['frameCollection' => $model->frameCollection]) ?>
+    </div>
+    <div class="col-sm-3">
+      <?= $this->render('/_partials/geoloc-per-gateway-count-table', ['geolocStats' => $model->frameCollection->geoloc]) ?>
+    </div>
 </div>
-<hr />
+<hr/>
 </div>
 <div class="container-fluid">
   <?= $this->render('/_partials/geoloc-table', ['frameCollection' => $model->frameCollection]) ?>

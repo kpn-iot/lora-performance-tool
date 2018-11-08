@@ -27,20 +27,34 @@ AngularAsset::register($this);
   <table class="table table-striped">
     <tbody>
       <tr>
-        <th style="width:20%">Device</th>
-        <td><select ng-options="device.name for device in devices" ng-model="select.device" class="form-control"></select></td>
+        <th style="width:20%">LoRa network *</th>
+        <td><select ng-options="item for item in baseUrls" ng-model="select.baseUrl" class="form-control"></select></td>
       </tr>
       <tr>
-        <th>Payload</th>
+        <th style="width:20%">Device *</th>
+        <td><select ng-options="device.name for device in devices" ng-model="select.device" class="form-control"></select></td>
+      </tr>
+      <tr class="text-muted">
+          <th>Port</th>
+          <td><input ng-model="select.port" class="form-control" />
+              <small>Leave empty to use default port in device configuration</small></td>
+      </tr>
+      <tr>
+        <th>Payload *</th>
         <td><input ng-model="select.payload" class="form-control" /></td>
       </tr>
       <tr>
-        <th>Timestamp offset (optional)</th>
-        <td><input ng-model="select.offset" class="form-control" /></td>
+          <th>Confirmed</th>
+          <td><input type="checkbox" ng-model="select.confirmed" /></td>
+      </tr>
+      <tr>
+        <th>Timestamp offset</th>
+        <td><input ng-model="select.offset" class="form-control" />
+        <small class="text-muted">Optional. If the request timestamp should be corrected for some reason.</small></td>
       <tr>
         <th></th>
         <td>
-          <button ng-click="go()" class="btn btn-primary">Send adapt request</button>
+          <button ng-click="go()" class="btn btn-primary">Send downlink request</button>
           {{response}}
         </td>
       </tr>
@@ -74,7 +88,9 @@ AngularAsset::register($this);
   app.controller('AppController', ['$scope', '$http', '$sce',
     function ($scope, $http, $sce) {
       $scope.devices = <?= json_encode($devices) ?>;
+	  $scope.baseUrls = ['KPN Network', 'Partner network'];
       $scope.select = {
+		  baseUrl: 'KPN Network',
         device: $scope.devices[0],
         payload: "00",
         offset: "0"

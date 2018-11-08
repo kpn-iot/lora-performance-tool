@@ -45,9 +45,11 @@ use app\models\lora\FrameCollection;
  * @property integer $sf
  * @property string $typeIcon
  * @property string $vehicleTypeIcon
+ * @property string $vehicleTypeReadable
  * @property string $vehicleTypeFormatted
  * @property string $motionIndicatorReadable
  * @property string $typeFormatted
+ * @property string $typeReadable
  *
  * @property SessionProperties $prop
  * @property FrameCollection $frameCollection
@@ -329,6 +331,21 @@ class Session extends ActiveRecord {
     }
   }
 
+  public function getTypeReadable() {
+    switch ($this->type) {
+      case 'moving':
+        return 'Moving';
+      case 'static':
+        $str = "Static";
+        if ($this->location_id !== null) {
+          $str .= " @ " . $this->location->name;
+        } elseif ($this->latitude !== null && $this->longitude !== null) {
+          $str .= " @ " . $this->latitude . ',' . $this->longitude;
+        }
+        return $str;
+    }
+  }
+
   public function getTypeFormatted() {
     $str = $this->typeIcon . ' ';
     switch ($this->type) {
@@ -343,6 +360,15 @@ class Session extends ActiveRecord {
         }
         return $str;
     }
+  }
+
+  public function getVehicleTypeReadable() {
+    if ($this->vehicle_type == null) {
+      return 'Unknown';
+    } elseif (!isset(static::$vehicleTypeOptions[$this->vehicle_type])) {
+      return $this->vehicle_type;
+    }
+    return static::$vehicleTypeOptions[$this->vehicle_type];
   }
 
   public function getVehicleTypeFormatted() {

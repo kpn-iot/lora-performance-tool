@@ -70,7 +70,7 @@ class MapData extends \yii\base\BaseObject {
       $mapDataItem['reception'] = [];
       if (isset($frame['reception'])) {
         foreach ($frame['reception'] as $reception) {
-          $mapDataItem['reception'][] = $reception->gateway->lrr_id;
+          $mapDataItem['reception'][] = $reception['lrrId'];
         }
       }
 

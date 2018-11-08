@@ -29,6 +29,7 @@ $frameCollection = $model->frameCollection;
   <?= Html::a(Html::icon('equalizer') . ' Geoloc report', ['/sessions/report-geoloc', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
   <?= Html::a(Html::icon('map-marker') . ' Map', ['/map/index', 'session_id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
   <?= Html::a(Html::icon('list') . ' Frames', ['/frames/index', 'FrameSearch[session_id]' => $model->id], ['class' => 'btn btn-link hidden-print']); ?>
+  <?= Html::a(Html::icon('export') . ' Export', ['export', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
   <?= Html::a(Html::icon('pencil') . ' Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary hidden-print']) ?>
   <?= Html::a(Html::icon('resize-full') . ' Split', ['split', 'id' => $model->id], ['class' => 'btn btn-default hidden-print']) ?>
   <?=

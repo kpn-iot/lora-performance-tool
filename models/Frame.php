@@ -121,7 +121,7 @@ class Frame extends ActiveRecord {
 
   public function getTimestamp() {
     if ($this->_timestamp === null) {
-      $this->_timestamp = strtotime($this->created_at);
+      $this->_timestamp = strtotime($this->created_at . " UTC");
     }
     return $this->_timestamp;
   }
@@ -201,20 +201,36 @@ class Frame extends ActiveRecord {
     return static::formatBearingArrow($this->bearing);
   }
 
+  public static function bearingText($bearing) {
+    return static::_bearing($bearing, [
+        0 => "N",
+        45 => "NE",
+        90 => "E",
+        135 => "SE",
+        180 => "S",
+        225 => "SW",
+        270 => "W",
+        315 => "NW"
+    ]);
+  }
+
   public static function formatBearingArrow($bearing) {
+    return static::_bearing($bearing, [
+        0 => "&uarr;",
+        45 => "&nearr;",
+        90 => "&rarr;",
+        135 => "&searr;",
+        180 => "&darr;",
+        225 => "&swarr;",
+        270 => "&larr;",
+        315 => "&nwarr;"
+    ]);
+  }
+
+  private static function _bearing($bearing, $degrees) {
 	  if ($bearing === null) {
 		  return null;
 	  }
-    $degrees = [
-      0 => "&uarr;",
-      45 => "&nearr;",
-      90 => "&rarr;",
-      135 => "&searr;",
-      180 => "&darr;",
-      225 => "&swarr;",
-      270 => "&larr;",
-      315 => "&nwarr;"
-    ];
     foreach ($degrees as $deg => $arrow) {
       $min = (360 + $deg - 22.5) % 360;
       $max = ($deg + 22.5) % 360;
@@ -233,12 +249,11 @@ class Frame extends ActiveRecord {
     $out = "<table class='table table-bordered' style='margin:0'>";
     foreach ($this->reception as $reception) {
       if ($this->latitude === null) {
-        $distance = '';
+        $distance = null;
       } elseif ($reception->gateway->latitude == 0) {
-        $distance = '?';
+        $distance = null;
       } else {
         $distance = Calc::coordinateDistance($this->latitude, $this->longitude, $reception->gateway->latitude, $reception->gateway->longitude);
-        $distance = Yii::$app->formatter->asDistance($distance, 0);
       }
       $out .= "<tr><td>" . Html::a($reception->gateway->lrr_id, ['/gateways/view', 'id' => $reception->gateway_id]) . "</td>"
         . "<td class='text-right'>" . $distance . "</td>"

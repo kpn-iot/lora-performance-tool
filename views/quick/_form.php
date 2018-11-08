@@ -17,6 +17,11 @@ use yii\widgets\ActiveForm;
 /* @var $this yii\web\View */
 /* @var $model app\models\Quick */
 /* @var $form yii\widgets\ActiveForm */
+
+$max_upload = (int)(ini_get('upload_max_filesize'));
+$max_post = (int)(ini_get('post_max_size'));
+$memory_limit = (int)(ini_get('memory_limit'));
+$upload_mb = min($max_upload, $max_post, $memory_limit);
 ?>
 
 <div class="quick-form">
@@ -27,7 +32,15 @@ use yii\widgets\ActiveForm;
 
   <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
 
-  <?= $form->field($model, 'file')->fileInput() ?>
+  <?php
+	$field = $form->field($model, 'file')->fileInput();
+	$hint = "Max file size: " . $upload_mb . 'MB.';
+    if (!$model->isNewRecord) {
+		$hint .= " " . Html::a('Download current file', ['file', 'id' => $model->id]);
+	}
+	$field->hint($hint);
+	echo $field;
+  ?>
 
   <?= $form->field($model, 'payload_type')->dropDownList(\app\components\data\Decoding::getSupportedPayloadTypes(), ['prompt' => 'n.a.']) ?>
 

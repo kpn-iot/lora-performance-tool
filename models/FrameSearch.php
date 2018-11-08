@@ -91,7 +91,7 @@ class FrameSearch extends Frame {
    * @return ActiveQuery
    */
   public function filter($params, $sessionIds = null) {
-    $query = Frame::find()->with(['session']);
+    $query = Frame::find();
 
     $this->load($params);
 
@@ -114,7 +114,7 @@ class FrameSearch extends Frame {
    * @return ActiveDataProvider
    */
   public function search($params) {
-    $query = Frame::find()->with(['session', 'session.device', 'reception', 'reception.gateway']);
+    $query = Frame::find();
 
     // add conditions that should always apply here
 

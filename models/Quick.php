@@ -136,7 +136,10 @@ class Quick extends ActiveRecord {
       ];
     }
 
-    while (($data = fgetcsv($handle, 0, ',')) !== false) {
+    while (($data = fgetcsv($handle, 0)) !== false) {
+		if (count($data) === 1) {
+			throw new HttpException(400, "CSV cannot be processed correctly, the delimiter could be wrong (should be a comma) or it is not a proper Thingpark CSV");
+		}
       if ($data[0] != '0' || $data[5] == 'None' || (count($data) >= 131 && $data[131] == '1')) {
         continue;
       }
@@ -183,10 +186,9 @@ class Quick extends ActiveRecord {
         if (isset($gatewayLocations[$lrrId])) {
           $gwInfo = $gatewayLocations[$lrrId];
           if ($gwInfo['latitude'] == 0) {
-            $distance = "?";
+            $distance = null;
           } else {
             $distance = Calc::coordinateDistance($latitude, $longitude, $gwInfo['latitude'], $gwInfo['longitude']);
-            $distance = Yii::$app->formatter->asDistance($distance, 0);
           }
         } else {
           $distance = null;

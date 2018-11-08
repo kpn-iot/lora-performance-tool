@@ -59,8 +59,20 @@ class DataController extends Controller {
         $offset = (float) $select['offset'];
       }
 
+      $overwritePort = null;
+      if (isset($select['port'])) {
+        $overwritePort = $select['port'];
+      }
+
+      $confirmed = false;
+      if (isset($select['confirmed'])) {
+        $confirmed = true;
+      }
+
       $device = Device::findOne($select['device']);
-      $result = Downlink::thingpark($device, $select['payload'], $offset);
+	  $sendToPartnerNetwork = (isset($select['baseUrl']) && $select['baseUrl'] == 'Partner network');
+
+      $result = Downlink::thingpark($device, $select['payload'], $offset, $overwritePort, $confirmed, $sendToPartnerNetwork);
       die($result['description']);
     }
 

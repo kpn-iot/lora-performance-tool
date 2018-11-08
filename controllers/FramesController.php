@@ -18,6 +18,7 @@ use app\models\FrameSearch;
 use app\models\Session;
 use Yii;
 use yii\base\ErrorException;
+use yii\filters\AccessControl;
 use yii\web\Controller;
 
 class FramesController extends Controller {
@@ -25,7 +26,7 @@ class FramesController extends Controller {
   public function behaviors() {
     return [
       'access' => [
-        'class' => \yii\filters\AccessControl::className(),
+        'class' => AccessControl::className(),
         'rules' => [
           [
             'allow' => true,

@@ -74,6 +74,7 @@ $attributes = array_merge($attributes, [
          <?= Html::a(Html::icon('stats'), ['/sessions/report-coverage', 'id' => $session->id], ['class' => 'btn btn-default']) ?>
          <?= Html::a(Html::icon('equalizer'), ['/sessions/report-geoloc', 'id' => $session->id], ['class' => 'btn btn-default']) ?>
          <?= Html::a(Html::icon('map-marker'), ['/map/index', 'session_id' => $session->id], ['class' => 'btn btn-default']) ?>
+        <?= Html::a(Html::icon('export'), ['/sessions/export', 'id' => $session->id], ['class' => 'btn btn-default']) ?>
     </span>
     <span class="pull-left" style="margin-right:7px">
       <?= $session->typeIcon ?>
