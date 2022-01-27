@@ -16,7 +16,7 @@ use yii\bootstrap\Html;
 /* @var $this yii\web\View */
 /* @var $model app\models\Session */
 
-$this->title = "Geoloc report " . $model->name;
+$this->title = "Location report " . $model->name;
 $this->params['breadcrumbs'][] = ['label' => 'Devices', 'url' => ['/devices/index']];
 $this->params['breadcrumbs'][] = ['label' => $model->device->name, 'url' => ['/devices/view', 'id' => $model->device_id]];
 $this->params['breadcrumbs'][] = ['label' => 'Sessions', 'url' => ['index', 'SessionSearch[device_id]' => $model->device_id]];

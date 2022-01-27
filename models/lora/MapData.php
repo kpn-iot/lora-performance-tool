@@ -49,6 +49,7 @@ class MapData extends \yii\base\BaseObject {
         'latitude_lora' => $frame->latitude_lora,
         'longitude_lora' => $frame->longitude_lora,
         'location_age_lora' => $frame->location_age_lora,
+        'location_radius_lora' => $frame->location_radius_lora,
         'raw_timestamp' => $frame->time
       ];
 
@@ -87,7 +88,7 @@ class MapData extends \yii\base\BaseObject {
   public static function interpolateMissingFrames($mapData, $interpolateLocation = true) {
     $enrichedMapData = [];
     $previousFrameCounter = null;
-    $previousItem = null;
+    $previousItem = $mapData[0];
     foreach ($mapData as $item) {
       $previousFrameCounter = $previousItem['f_cnt_up'];
       $frameCounter = $item['f_cnt_up'];

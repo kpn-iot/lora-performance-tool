@@ -15,7 +15,7 @@
 namespace app\models\lora;
 
 use app\helpers\Calc;
-use app\models\Session;
+use app\models\Frame;
 
 /**
  * Class BareFrame
@@ -24,18 +24,21 @@ use app\models\Session;
  */
 class BareFrame implements \ArrayAccess {
 
-  public $channel, $timestamp, $device_eui, $location_age_lora, $gateway_count, $latitude, $longitude, $latitude_lora, $longitude_lora,
-      $bearing, $count_up, $location_radius_lora, $distance, $sf, $reception = [], $time, $created_at;
+  public $channel, $timestamp, $device_eui, $location_age_lora, $gateway_count, $isValidSolve, $latitude, $longitude, $latitude_lora, $longitude_lora,
+      $bearing, $bearingArrow, $count_up, $location_radius_lora, $location_algorithm_lora, $distance, $sf, $reception = [], $time, $created_at, $couldHaveValidSolve;
 
   public function __construct($frameInfo, $session, BareFrameFactory &$factory) {
     $this->timestamp = strtotime($frameInfo['created_at'] . " UTC");
     $this->device_eui = '';
 
-    foreach (['location_age_lora', 'latitude', 'longitude', 'latitude_lora', 'longitude_lora', 'gateway_count', 'count_up', 'location_radius_lora', 'sf', 'time', 'channel', 'created_at'] as $attr) {
+    foreach (['location_age_lora', 'latitude', 'longitude', 'latitude_lora', 'longitude_lora', 'gateway_count', 'count_up', 'location_radius_lora', 'location_algorithm_lora', 'sf', 'time', 'channel', 'created_at'] as $attr) {
       $this->$attr = $frameInfo[$attr];
     }
 
     foreach ($frameInfo['reception'] as $reception) {
+      if (is_object($reception)) {
+        $reception = $reception->attributes;
+      }
       $gateway = $factory->getGatewayInfo($reception['gateway_id']);
       if ($gateway === null) {
         continue;
@@ -61,20 +64,37 @@ class BareFrame implements \ArrayAccess {
       $this->reception[] = $reception;
     }
 
-    if ($session['type'] == "static" && $session['latitude'] !== null && $session['longitude'] !== null) {
+    $latitudeSec = $this->latitude_lora;
+    $longitudeSec = $this->longitude_lora;
+
+    $isValidStaticSession = ($session['type'] == "static" && $session['latitude'] !== null && $session['longitude'] !== null);
+    $this->isValidSolve = ($isValidStaticSession && $session['location_report_source'] === "gps") ? ($this->latitude !== null && $this->longitude !== null) : ($this->location_age_lora !== null && $this->location_age_lora < Frame::$locationAgeThreshold && $this->latitude_lora !== null && $this->longitude_lora !== null);
+    $this->couldHaveValidSolve = ($isValidStaticSession && $session['location_report_source'] === "gps") || ($this->latitude_lora !== null && $this->longitude_lora !== null);
+
+    if ($isValidStaticSession) {
       $latitude = $session['latitude'];
       $longitude = $session['longitude'];
+
+      if ($session['location_report_source'] === "gps") {
+        $latitudeSec = $this->latitude;
+        $longitudeSec = $this->longitude;
+      }
     } else {
       $latitude = $this->latitude;
       $longitude = $this->longitude;
     }
-    if (($latitude == 0 && $longitude == 0) || ($latitude == null && $longitude == null) || ($this->latitude_lora == null && $this->longitude_lora == null)) {
+    if (!$this->isValidSolve || ($latitude == 0 || $longitude == 0) || ($latitude == null && $longitude == null) || ($latitudeSec == 0 || $longitudeSec == 0) || ($latitudeSec == null && $longitudeSec == null)) {
       $this->distance = null;
       $this->bearing = null;
+    } elseif ($latitude - $latitudeSec == 0 && $longitude - $longitudeSec == 0) {
+      $this->distance = 0;
+      $this->bearing = null;
     } else {
-      $this->distance = Calc::coordinateDistance($latitude, $longitude, $this->latitude_lora, $this->longitude_lora);
-      $this->bearing = Calc::coordinateBearing($latitude, $longitude, $this->latitude_lora, $this->longitude_lora);
+      $this->distance = Calc::coordinateDistance($latitude, $longitude, $latitudeSec, $longitudeSec);
+      $this->bearing = Calc::coordinateBearing($latitude, $longitude, $latitudeSec, $longitudeSec);
     }
+
+    $this->bearingArrow = Frame::formatBearingArrow($this->bearing);
   }
 
   public function offsetExists($offset) {

@@ -50,17 +50,10 @@ class FramesController extends Controller {
       $session_id = null;
     }
 
-    $sessions = Session::find()->with('device')->orderBy(['created_at' => SORT_DESC])->all();
-    $sessionsFilter = [];
-    foreach ($sessions as $session) {
-      $sessionsFilter[$session->id] = $session->fullName;
-    }
-
     return $this->render('index', [
         'searchModel' => $searchModel,
         'dataProvider' => $dataProvider,
         'session' => Session::findOne($session_id),
-        'sessionsFilter' => $sessionsFilter
     ]);
   }
 

@@ -53,14 +53,16 @@ class Ingestion {
   }
 
   /**
-   * 
+   *
    * @param Frame $newFrame
    * @param Device $device
    * @param DeviceLocation|null $previousFrameGeoloc
    * @param ReceptionRaw[]|null $receptions
    * @return Frame
+   * @throws HttpException
    */
   public static function frame($newFrame, $device, $previousFrameGeoloc = null, $receptions = null) {
+    /** @var Session $session */
     $session = Session::find()->with('device')->andWhere(['device_id' => $device->id])->orderBy('created_at DESC')->one();
     $startNewSession = false;
     $copyOldSessionInfo = false;
@@ -70,6 +72,9 @@ class Ingestion {
       if ($newFrame->count_up < $session->lastFrame->count_up || $newFrame->count_up == 0) { //new counter value is smaller than the previous frame
         $startNewSession = true;
       } elseif ($session->device->autosplit && (strtotime(date('d-m-Y', strtotime($newFrame->time))) > strtotime(date('d-m-Y', strtotime($session->lastFrame->time))))) { // new frame received on a new day (after midnight)
+        $startNewSession = true;
+        $copyOldSessionInfo = true;
+      } elseif ($session->properties !== null && $session->properties->nr_frames >= 1000) {
         $startNewSession = true;
         $copyOldSessionInfo = true;
       }
@@ -91,23 +96,20 @@ class Ingestion {
         $session->location_id = $previousSession->location_id;
         $session->latitude = $previousSession->latitude;
         $session->longitude = $previousSession->longitude;
+        $session->location_report_source = $previousSession->location_report_source;
       } else {
         $session = new Session();
         $session->device_id = $device->id;
       }
       // drop frame if received already
     } elseif ($session->lastFrame != null && $newFrame->count_up == $session->lastFrame->count_up) {
-      static::error(200, 'Frame is duplicate');
+      static::error(409, 'Frame is duplicate');
     }
 
     // store newly received lora localisation info
-    if ($session->lastFrame != null && $previousFrameGeoloc !== null) {
+    if ($previousFrameGeoloc !== null && $session->lastFrame != null) {
       $lastFrame = $session->lastFrame;
-      $lastFrame->latitude_lora = $previousFrameGeoloc->latitude;
-      $lastFrame->longitude_lora = $previousFrameGeoloc->longitude;
-      $lastFrame->location_age_lora = strtotime($lastFrame->time) - $previousFrameGeoloc->time;
-      $lastFrame->location_radius_lora = $previousFrameGeoloc->radius;
-      $lastFrame->save();
+      $lastFrame->saveLoRaLocation($previousFrameGeoloc);
       // $lastFrame is used later on
     }
     $session->save();
@@ -118,14 +120,17 @@ class Ingestion {
       return $check;
     }
 
-    $info = Decoding::decode($newFrame->payload_hex, $session->device->payload_type);
-    if (isset($info['latitude']) && isset($info['longitude'])) {
-      $newFrame->latitude = (string) $info['latitude'];
-      $newFrame->longitude = (string) $info['longitude'];
-      unset($info['latitude']);
-      unset($info['longitude']);
+    // decoding if payload hex is set
+    if ($newFrame->payload_hex !== null) {
+      $info = Decoding::decode($newFrame->payload_hex, $session->device->payload_type);
+      if (isset($info['latitude']) && isset($info['longitude'])) {
+        $newFrame->latitude = (string)$info['latitude'];
+        $newFrame->longitude = (string)$info['longitude'];
+        unset($info['latitude']);
+        unset($info['longitude']);
+      }
+      $newFrame->information = $info;
     }
-    $newFrame->information = $info;
 
     if (!$newFrame->save()) {
       static::error(500, json_encode($newFrame->errors));
@@ -148,9 +153,9 @@ class Ingestion {
         $item = new Reception();
         $item->gateway_id = $gateway->id;
         $item->frame_id = $newFrame->id;
-        $item->rssi = $reception->rssi;
-        $item->snr = $reception->snr;
-        $item->esp = $reception->esp;
+        $item->rssi = (int) $reception->rssi;
+        $item->snr = (int) $reception->snr;
+        $item->esp = (double) $reception->esp;
         if (!$item->save()) {
           ApiLog::log(json_encode($item->errors));
         }

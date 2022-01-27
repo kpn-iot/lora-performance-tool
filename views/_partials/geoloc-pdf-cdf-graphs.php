@@ -12,7 +12,7 @@
  */
 
 /* @var $this yii\web\View */
-/* @var $stats \app\components\GeolocStats */
+/* @var $stats \app\models\lora\GeolocStats */
 
 if (!isset($makePNG)) {
   $makePNG = false;

@@ -54,6 +54,7 @@ class SessionsController extends Controller {
             'class' => VerbFilter::className(),
             'actions' => [
                 'delete' => ['POST'],
+                'bulk-delete' => ['POST'],
             ],
         ],
     ];
@@ -322,6 +323,17 @@ class SessionsController extends Controller {
     $model->delete();
 
     return $this->redirect(['index', 'SessionSearch[device_id]' => $deviceId]);
+  }
+
+  public function actionBulkDelete() {
+    $ids = Yii::$app->request->post('ids');
+    if (count($ids) > 20) {
+      throw new \Exception("You cannot bulk delete more than 20 sessions at once");
+    }
+    foreach ($ids as $id) {
+      $this->findModel($id)->delete();
+    }
+    return;
   }
 
   /**

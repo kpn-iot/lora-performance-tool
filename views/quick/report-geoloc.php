@@ -16,7 +16,7 @@ use yii\bootstrap\Html;
 /* @var $this yii\web\View */
 /* @var $model app\models\Quick */
 
-$this->title = "Geoloc report " . $model->name;
+$this->title = "Location report " . $model->name;
 $this->params['breadcrumbs'][] = ['label' => 'Quicks', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>

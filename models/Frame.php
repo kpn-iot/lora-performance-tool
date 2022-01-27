@@ -36,6 +36,7 @@ use app\helpers\Calc;
  * @property string $longitude_lora
  * @property integer $location_age_lora
  * @property string $location_radius_lora
+ * @property string $location_algorithm_lora
  * @property integer $distance
  * @property integer $bearing
  * @property string $created_at
@@ -49,6 +50,8 @@ class Frame extends ActiveRecord {
   public static $locationAgeThreshold = 5;
   public $count, $date, $distanceRounded;
   private $_timestamp = null;
+
+  static $locationAlgorithmLoRaOptions = ["tdoa" => "TDoA", "rssi" => "RSSI"];
 
   /**
    * @inheritdoc
@@ -110,9 +113,29 @@ class Frame extends ActiveRecord {
       'latitude_lora' => 'Latitude Lora',
       'longitude_lora' => 'Longitude Lora',
       'location_age_lora' => 'Location Age Lora',
+      'location_algorithm_lora' => 'Location Algorithm Lora',
       'created_at' => 'Created At',
       'updated_at' => 'Updated At',
     ];
+  }
+
+  /**
+   * @param DeviceLocation $location
+   * @return bool
+   */
+  public function saveLoRaLocation($location, $overwrite = false) {
+    if ($location === null) {
+      return;
+    } elseif ($overwrite === false && $this->latitude_lora !== null) {
+      return;
+    }
+
+    $this->latitude_lora = $location->latitude;
+    $this->longitude_lora = $location->longitude;
+    $this->location_age_lora = strtotime($this->time) - $location->time;
+    $this->location_radius_lora = $location->radius;
+    $this->location_algorithm_lora = $location->algorithm;
+    return $this->save();
   }
 
   public function getDevice_eui() {
@@ -151,50 +174,97 @@ class Frame extends ActiveRecord {
     return $this->hasOne(Session::className(), ['id' => 'session_id']);
   }
 
+  /**
+   * @return \yii\db\ActiveQuery
+   */
+  public function getDevice() {
+    return $this->hasOne(Device::className(), ['id' => 'device_id'])->via('session');
+  }
+
+  public function getIsValidStaticSession() {
+    return ($this->session->type == "static" && $this->session->latitude !== null && $this->session->longitude !== null);
+  }
+
+  public function getIsValidSolve() {
+    if ($this->getIsValidStaticSession() && $this->session->location_report_source === "gps") {
+      return ($this->latitude !== null && $this->longitude !== null);
+    }
+    return ($this->location_age_lora !== null && $this->location_age_lora < Frame::$locationAgeThreshold && $this->latitude_lora !== null && $this->longitude_lora !== null);
+  }
+
+  public function getCouldHaveValidSolve() {
+    if ($this->getIsValidStaticSession() && $this->session->location_report_source === "gps") {
+      return true;
+    }
+    return ($this->latitude_lora !== null && $this->longitude_lora !== null);
+  }
+
   public function getLatDiff() {
+    $latitudeSec = $this->latitude_lora;
     if ($this->session->type == "static" && $this->session->latitude !== null && $this->session->longitude !== null) {
       $latitude = $this->session->latitude;
+      if ($this->session->location_report_source === "gps") {
+        $latitudeSec = $this->latitude;
+      }
     } else {
       $latitude = $this->latitude;
     }
-    return $latitude - $this->latitude_lora;
+    return $latitude - $latitudeSec;
   }
 
   public function getLonDiff() {
+    $longitudeSec = $this->longitude_lora;
     if ($this->session->type == "static" && $this->session->latitude !== null && $this->session->longitude !== null) {
       $longitude = $this->session->longitude;
+      if ($this->session->location_report_source === "gps") {
+        $longitudeSec = $this->longitude;
+      }
     } else {
       $longitude = $this->longitude;
     }
-    return $longitude - $this->longitude_lora;
+    return $longitude - $longitudeSec;
   }
 
   public function getDistance() {
-    if ($this->session->type == "static" && $this->session->latitude !== null && $this->session->longitude !== null) {
+    $latitudeSec = $this->latitude_lora;
+    $longitudeSec = $this->longitude_lora;
+    if ($this->getIsValidStaticSession()) {
       $latitude = $this->session->latitude;
       $longitude = $this->session->longitude;
+
+      if ($this->session->location_report_source === "gps") {
+        $latitudeSec = $this->latitude;
+        $longitudeSec = $this->longitude;
+      }
     } else {
       $latitude = $this->latitude;
       $longitude = $this->longitude;
     }
-    if (($latitude == 0 && $longitude == 0) || ($latitude == null && $longitude == null) || ($this->latitude_lora == null && $this->longitude_lora == null)) {
+    if (!$this->getIsValidSolve() || ($latitude == 0 && $longitude == 0) || ($latitude == null && $longitude == null) || ($latitudeSec == null && $longitudeSec == null)) {
       return null;
     }
-    return Calc::coordinateDistance($latitude, $longitude, $this->latitude_lora, $this->longitude_lora);
+    return Calc::coordinateDistance($latitude, $longitude, $latitudeSec, $longitudeSec);
   }
 
   public function getBearing() {
-    if ($this->session->type == "static" && $this->session->latitude !== null && $this->session->longitude !== null) {
+    $latitudeSec = $this->latitude_lora;
+    $longitudeSec = $this->longitude_lora;
+    if ($this->getIsValidStaticSession()) {
       $latitude = $this->session->latitude;
       $longitude = $this->session->longitude;
+
+      if ($this->session->location_report_source === "gps") {
+        $latitudeSec = $this->latitude;
+        $longitudeSec = $this->longitude;
+      }
     } else {
       $latitude = $this->latitude;
       $longitude = $this->longitude;
     }
-    if (($latitude == 0 && $longitude == 0) || ($latitude == null && $longitude == null) || ($this->latitude_lora == null && $this->longitude_lora == null)) {
+    if (!$this->getIsValidSolve() || ($latitude == 0 && $longitude == 0) || ($latitude == null && $longitude == null) || ($latitudeSec == null && $longitudeSec == null)) {
       return null;
     }
-    return Calc::coordinateBearing($latitude, $longitude, $this->latitude_lora, $this->longitude_lora);
+    return Calc::coordinateBearing($latitude, $longitude, $latitudeSec, $longitudeSec);
   }
 
   public function getBearingArrow() {
@@ -203,34 +273,34 @@ class Frame extends ActiveRecord {
 
   public static function bearingText($bearing) {
     return static::_bearing($bearing, [
-        0 => "N",
-        45 => "NE",
-        90 => "E",
-        135 => "SE",
-        180 => "S",
-        225 => "SW",
-        270 => "W",
-        315 => "NW"
+      0 => "N",
+      45 => "NE",
+      90 => "E",
+      135 => "SE",
+      180 => "S",
+      225 => "SW",
+      270 => "W",
+      315 => "NW"
     ]);
   }
 
   public static function formatBearingArrow($bearing) {
     return static::_bearing($bearing, [
-        0 => "&uarr;",
-        45 => "&nearr;",
-        90 => "&rarr;",
-        135 => "&searr;",
-        180 => "&darr;",
-        225 => "&swarr;",
-        270 => "&larr;",
-        315 => "&nwarr;"
+      0 => "&uarr;",
+      45 => "&nearr;",
+      90 => "&rarr;",
+      135 => "&searr;",
+      180 => "&darr;",
+      225 => "&swarr;",
+      270 => "&larr;",
+      315 => "&nwarr;"
     ]);
   }
 
   private static function _bearing($bearing, $degrees) {
-	  if ($bearing === null) {
-		  return null;
-	  }
+    if ($bearing === null) {
+      return null;
+    }
     foreach ($degrees as $deg => $arrow) {
       $min = (360 + $deg - 22.5) % 360;
       $max = ($deg + 22.5) % 360;

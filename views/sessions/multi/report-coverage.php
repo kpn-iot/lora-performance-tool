@@ -22,7 +22,7 @@ $this->params['breadcrumbs'][] = ['label' => 'Sessions', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <p>
-  <?= Html::a(Html::icon('equalizer') . ' Geoloc report', ['report-geoloc', 'id' => $sessionCollection->idList], ['class' => 'btn btn-link hidden-print']) ?>
+  <?= Html::a(Html::icon('equalizer') . ' Location report', ['report-geoloc', 'id' => $sessionCollection->idList], ['class' => 'btn btn-link hidden-print']) ?>
   <?php if ($sessionCollection->frameCollection->nrDevices == 1): ?>
     <?= Html::a(Html::icon('map-marker') . ' Map', ['/map/index', 'session_id' => $sessionCollection->idList], ['class' => 'btn btn-link hidden-print']) ?>
   <?php endif ?>

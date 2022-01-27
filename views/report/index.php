@@ -12,7 +12,11 @@
  */
 
 use app\components\data\Decoding;
+use app\models\DeviceSearch;
+use app\models\Frame;
+use app\models\FrameSearch;
 use app\models\Session;
+use app\models\SessionSearch;
 use yii\bootstrap\ActiveForm;
 use yii\grid\GridView;
 use yii\helpers\Html;
@@ -21,6 +25,9 @@ use yii\helpers\Html;
 /* @var $sessionSearchModel app\models\SessionSearch */
 /* @var $sessionProvider yii\data\ActiveDataProvider */
 /* @var $frameCollection app\models\lora\FrameCollection */
+/* @var $deviceSearchModel DeviceSearch */
+/* @var $sessionSearchModel SessionSearch */
+/* @var $frameSearchModel FrameSearch */
 
 $this->title = 'Report';
 $this->params['breadcrumbs'][] = $this->title;
@@ -45,6 +52,7 @@ $form = ActiveForm::begin([
     <div class="col-xs-6 col-md-3">
       <?= $form->field($deviceSearchModel, 'payload_type')->checkboxList(Decoding::getSupportedPayloadTypes()) ?>
       <?= $form->field($sessionSearchModel, 'type')->checkboxList(Session::$typeOptions) ?>
+      <?= $form->field($frameSearchModel, 'location_algorithm_lora')->checkboxList(Frame::$locationAlgorithmLoRaOptions) ?>
     </div>
 
     <div class="col-xs-6 col-md-2">

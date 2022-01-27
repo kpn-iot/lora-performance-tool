@@ -23,7 +23,7 @@ use yii\helpers\Url;
   <head>
     <meta charset="<?= Yii::$app->charset ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
-    <?= Html::csrfMetaTags() ?>
+    <?php $this->registerCsrfMetaTags() ?>
     <title><?php if ($this->title != false): ?><?= Html::encode(strip_tags($this->title)) ?> | <?php endif ?><?= Yii::$app->name ?></title>
     <?php $this->head() ?>
 

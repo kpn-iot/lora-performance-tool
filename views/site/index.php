@@ -31,7 +31,8 @@ $this->title = false;
   <div class="row">
     <div class='col-md-5 col-md-offset-1 col-sm-6 text-center'>
       <h4>API Endpoint</h4>
-      <p class="lead"><?= Url::to(['/api/thingpark'], true) ?></p>
+      <p><b>SenML:</b> <?= Url::to(['/api/senml'], true) ?></p>
+      <p><b>Thingpark:</b> <?= Url::to(['/api/thingpark'], true) ?></p>
     </div>
     <div class='col-md-5 col-sm-6 text-center'>
       <h4>LoRa Tools</h4>

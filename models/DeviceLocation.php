@@ -16,6 +16,6 @@ namespace app\models;
 
 class DeviceLocation extends \yii\base\Model {
 
-  public $latitude, $longitude, $time, $radius;
+  public $latitude, $longitude, $time, $radius, $algorithm;
 
 }

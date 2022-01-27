@@ -45,7 +45,8 @@ class CoverageStats extends \yii\base\BaseObject {
     $frames = $this->_frameCollection->frames;
 
     $this->_sfUsage = ['7' => 0, '8' => 0, '9' => 0, '10' => 0, '11' => 0, '12' => 0];
-    $this->_channelUsage = ['LC1' => 0, 'LC2' => 0, 'LC3' => 0, 'LC4' => 0, 'LC5' => 0, 'LC6' => 0, 'LC7' => 0, 'LC8' => 0];
+    $this->_channelUsage = ['LC1' => 0, 'LC2' => 0, 'LC3' => 0, 'LC4' => 0, 'LC5' => 0, 'LC6' => 0, 'LC7' => 0, 'LC8' => 0,
+        'LC9' => 0, 'LC10' => 0, 'LC11' => 0, 'LC12' => 0, 'LC13' => 0, 'LC14' => 0, 'LC15' => 0, 'LC16' => 0];
     $this->_gwCountPdf = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0, 6 => 0, 7 => 0, 8 => 0, 9 => 0, 10 => 0];
 
     $this->_timeline = [];
@@ -64,8 +65,10 @@ class CoverageStats extends \yii\base\BaseObject {
         $sfUsageCount += 1;
         $this->_sfUsage[$frame['sf']] += 1;
       }
-      $gwCountPdfCount += 1;
-      $this->_gwCountPdf[$frame['gateway_count']] += 1;
+      if ($frame['gateway_count'] >= 1 && $frame['gateway_count'] <= 10) {
+        $gwCountPdfCount += 1;
+        $this->_gwCountPdf[$frame['gateway_count']] += 1;
+      }
       if ($frame['channel'] != '' && isset($this->_channelUsage[$frame['channel']])) {
         $channelUsageCount += 1;
         $this->_channelUsage[$frame['channel']] += 1;

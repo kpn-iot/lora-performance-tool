@@ -39,7 +39,7 @@ $attributes = array_merge($attributes, [
     'label' => 'Avg. GW Count'
   ],
   [
-    'label' => 'LocSolve Median Accuracy',
+    'label' => 'Location Median Accuracy',
     'value' => function($data) {
       if ($data->prop->geoloc_accuracy_median === null) {
         return null;

@@ -112,8 +112,9 @@ class SessionSearch extends Session {
       "locSolveSuccess" => "p.geoloc_success_rate",
       "frr" => "p.frame_reception_ratio",
       "runtime" => "p.runtime",
+      "avgGwCount" => "p.gateway_count_average",
       "firstFrame" => "p.first_frame_at",
-      "lastFrame" => "p.last_frame_at"
+      "lastFrame" => "p.last_frame_at",
     ];
 
     foreach ($sorting as $key => $value) {

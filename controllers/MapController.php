@@ -15,12 +15,12 @@
 namespace app\controllers;
 
 use app\models\Gateway;
+use app\models\lora\SessionCollection;
+use app\models\Session;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\Response;
-use app\models\Session;
-use app\models\lora\SessionCollection;
 
 class MapController extends Controller {
 
@@ -29,15 +29,15 @@ class MapController extends Controller {
    */
   public function behaviors() {
     return [
-      'access' => [
-        'class' => AccessControl::className(),
-        'rules' => [
-          [
-            'allow' => true,
-            'roles' => ['@']
-          ]
+        'access' => [
+            'class' => AccessControl::className(),
+            'rules' => [
+                [
+                    'allow' => true,
+                    'roles' => ['@']
+                ]
+            ],
         ],
-      ],
     ];
   }
 
@@ -57,10 +57,10 @@ class MapController extends Controller {
     Yii::$app->response->format = Response::FORMAT_JSON;
     return array_map(function ($item) {
       return [
-        'name' => $item->lrr_id,
-        'type' => $item->type,
-        'latitude' => $item->latitude,
-        'longitude' => $item->longitude
+          'name' => $item->lrr_id,
+          'type' => $item->type,
+          'latitude' => $item->latitude,
+          'longitude' => $item->longitude
       ];
     }, Gateway::find()->all());
   }
@@ -69,12 +69,25 @@ class MapController extends Controller {
     Yii::$app->response->format = Response::FORMAT_JSON;
 
     $sessionIds = explode('.', $session_id);
+    /** @var Session[] $sessions */
     $sessions = Session::find()->with(['frames', 'device', 'frames.reception', 'frames.reception.gateway'])->andWhere(['id' => $sessionIds])->all();
     $sessionCollection = new SessionCollection($sessions);
 
+    $staticPointers = [];
+    foreach ($sessions as $session) {
+      if ($session->type === 'static' && $session->latitude !== null && $session->longitude !== null) {
+        $staticPointers[] = [
+            'sessionId' => $session->id,
+            'latitude' => $session->latitude,
+            'longitude' => $session->longitude
+        ];
+      }
+    }
+
     return [
-      'name' => $sessionCollection->name,
-      'frames' => $sessionCollection->frameCollection->mapData->data
+        'name' => $sessionCollection->name,
+        'staticPointers' => $staticPointers,
+        'frames' => $sessionCollection->frameCollection->mapData->data
     ];
   }
 

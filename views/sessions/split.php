@@ -39,5 +39,8 @@ $this->params['breadcrumbs'][] = $this->title;
   <?php ActiveForm::end() ?>
 
 </div>
-
-<?= $this->render('/_partials/geoloc-table', ['frameCollection' => $model->frameCollection]) ?>
+</div>
+<div class="container-fluid">
+  <?= $this->render('/_partials/geoloc-table', ['frameCollection' => $model->frameCollection]) ?>
+</div>
+<div class="container">

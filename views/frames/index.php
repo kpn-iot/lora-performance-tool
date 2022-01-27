@@ -41,7 +41,6 @@ $columns = [
   [
     'label' => 'Session',
     'attribute' => 'session_id',
-    'filter' => Select2::widget(['name' => 'FrameSearch[session_id]', 'value' => $searchModel->session_id, 'data' => $sessionsFilter, 'options' => ['placeholder' => '']]),
     'format' => 'raw',
     'value' => function ($data) {
       return $data->session->fullName;

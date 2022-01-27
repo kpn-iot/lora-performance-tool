@@ -17,7 +17,7 @@
     var sfs = <?= json_encode($frameCollection->coverage->sfUsage) ?>;
     var channels = <?= json_encode($frameCollection->coverage->channelUsage) ?>;
     var gwCounts = <?= json_encode($frameCollection->coverage->gwCountPdf) ?>;
-    var cdfGraph = <?= json_encode($frameCollection->coverage->espCdf); ?>;
+    var espCdfGraph = <?= json_encode($frameCollection->coverage->espCdf); ?>;
 
     google.charts.load('current', {packages: ['corechart', 'bar', 'line']});
     google.charts.setOnLoadCallback(function () {
@@ -101,13 +101,13 @@
         cdfData.addColumn({type: 'string', role: 'tooltip', p: {html: true}});
 
         var cdfRows = [];
-        for (i in cdfGraph) {
-            var point = cdfGraph[i];
+        for (i in espCdfGraph) {
+            var point = espCdfGraph[i];
             cdfRows.push([point['x'], point['y'], '<div style="padding:5px;max-width:140px"><b>' + (Math.round(100 * point['y']) / 100) + '%</b> is under <br/><b>' + point['x'] + ' dBm</b>']);
         }
         cdfData.addRows(cdfRows);
 
-        var cdfChartDiv = document.getElementById('cdf_graph');
+        var cdfChartDiv = document.getElementById('esp_cdf_graph');
         var cdfChart = new google.visualization.LineChart(cdfChartDiv);
         cdfChart.draw(cdfData, cdfOptions);
 
@@ -124,7 +124,7 @@
     </div>
     <div class="col-md-6">
         <h3>ESP occurence</h3>
-        <div id="cdf_graph"></div>
+        <div id="esp_cdf_graph"></div>
     </div>
     <div class="col-md-6">
         <h3>Channel occurence</h3>

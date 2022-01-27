@@ -35,7 +35,7 @@ $sessionCollection = $model->sessionCollection;
       ],
   ])
   ?>
-  <?= Html::a(Html::icon('equalizer') . ' Geoloc report', ['report-geoloc', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
+  <?= Html::a(Html::icon('equalizer') . ' Location report', ['report-geoloc', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
   <?= Html::a(Html::icon('export') . ' Export', ['export', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
 
 </p>

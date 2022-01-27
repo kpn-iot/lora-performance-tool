@@ -32,7 +32,7 @@ class FrameSearch extends Frame {
   public function rules() {
     return [
       [['id', 'session_id', 'count_up', 'gateway_count', 'location_age_lora', 'gatewayCountMin', 'gatewayCountMax'], 'integer'],
-      [['payload_hex', 'information', 'latitude', 'longitude', 'time', 'latitude_lora', 'longitude_lora', 'created_at', 'updated_at', 'gatewayCountMin', 'gatewayCountMax', 'createdAtMin', 'createdAtMax', 'channel', 'sf'], 'safe'],
+      [['payload_hex', 'information', 'latitude', 'longitude', 'time', 'location_algorithm_lora', 'latitude_lora', 'longitude_lora', 'created_at', 'updated_at', 'gatewayCountMin', 'gatewayCountMax', 'createdAtMin', 'createdAtMax', 'channel', 'sf'], 'safe'],
     ];
   }
 
@@ -79,6 +79,7 @@ class FrameSearch extends Frame {
       ->andFilterWhere(['like', 'latitude', $this->latitude])
       ->andFilterWhere(['like', 'longitude', $this->longitude])
       ->andFilterWhere(['like', 'time', $this->time])
+      ->andFilterWhere(['like', 'location_algorithm_lora', $this->location_algorithm_lora])
       ->andFilterWhere(['like', 'latitude_lora', $this->latitude_lora])
       ->andFilterWhere(['like', 'longitude_lora', $this->longitude_lora]);
   }
@@ -114,7 +115,7 @@ class FrameSearch extends Frame {
    * @return ActiveDataProvider
    */
   public function search($params) {
-    $query = Frame::find();
+    $query = Frame::find()->with(['session', 'session.device', 'reception', 'reception.gateway']);
 
     // add conditions that should always apply here
 

@@ -20,6 +20,9 @@ use yii\helpers\Url;
 /* @var $this yii\web\View */
 /* @var $searchModel app\models\SessionSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
+/* @var $model \app\models\Device */
+/* @var $devicesFilter array */
+/* @var $sessionSets array */
 
 $this->params['breadcrumbs'][] = ['label' => 'Devices', 'url' => ['/devices']];
 if ($model != null) {
@@ -96,7 +99,7 @@ $columns = [
         ]
     ],
     [
-        'label' => 'LocSolve Stats',
+        'label' => 'Location Stats',
         'attribute' => 'geolocStats',
         'format' => 'raw',
         'headerOptions' => [
@@ -207,43 +210,79 @@ $columns = [
 ];
 ?>
 
+<p class="lead">The large table below gives you an overview of all measurement sessions that are currently in the
+    Performance Tool.</p>
+<div class="row">
+    <div class="col-md-8">
+        <h4>Bulk actions</h4>
+        <p>With the checkboxes in the first row of the table you can select multiple sessions and do a single operation
+            on them.</p>
+
+        <div class="alert alert-danger" id="response" style="display:none"><b>Error on performing bulk action:</b> <span></span></div>
+        <div class="list-group">
+            <div class="list-group-item">
+                <div class="list-group-item-heading">Session set from selected sessions</div>
+                <form onsubmit="save()">
+                    <div class="form-group form-group-sm">
+                      <?= Html::dropDownList('session-set', null, $sessionSets, ['class' => 'form-control', 'prompt' => '- New session set - ', 'id' => 'session-set']) ?>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-default btn-sm" onclick="save()">Add selected sessions to selected
+                            session set
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="list-group-item">
+                <div class="list-group-item-heading">Quick session sets</div>
+                <p>
+                    You can generate a report of multiple sessions by editing the url manually to the following:
+                    <code><?= str_replace('100', '[sessionid1].[sessionid2].(etc)', Url::to(['report-coverage', 'id' => 100], true)) ?></code>.
+                    The session id can be found in the left column of the table below.
+                </p>
+            </div>
+            <div class="list-group-item">
+                <div class="list-group-item-heading">Ad hoc coverage report</div>
+                <p>Get an ad hoc coverage report of a selection of sessions.</p>
+                <p>
+                    <button class="btn btn-default btn-sm" type="button" onclick="quickReport()">Quick coverage report
+                    </button>
+                </p>
+            </div>
+            <div class="list-group-item">
+                <div class="list-group-item-heading">Delete multiple sessions at once</div>
+                <button class="btn btn-danger btn-sm" type="button" onclick="bulkDelete()">Delete selected sessions</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <h4>Legenda</h4>
+        <p>The list below explains all available actions.</p>
+        <ul class="list-group">
+            <li class="list-group-item"><?= Html::icon('modal-window') ?> is to get a map preview of the session.
+            </li>
+            <li class="list-group-item"><?= Html::icon('stats') ?> is to view the coverage report.</li>
+            <li class="list-group-item"><?= Html::icon('equalizer') ?> is to view the location report.</li>
+            <li class="list-group-item"><?= Html::icon('map-marker') ?> is to go to map view.</li>
+            <li class="list-group-item"><?= Html::icon('pencil') ?> is to edit the session properties.</li>
+            <li class="list-group-item"><?= Html::icon('resize-full') ?> is to split the session.</li>
+            <li class="list-group-item"><?= Html::icon('trash') ?> is to remove the session.</li>
+        </ul>
+    </div>
+</div>
+<br/>
 <script>
     $(function () {
         $('[data-toggle="popover"]').popover()
     });
-</script>
-<p class="lead">
-    Explanation of the icons in the action column: <?= Html::icon('modal-window') ?> is to get a map preview of the
-    session. <?= Html::icon('stats') ?> is to view the coverage report. <?= Html::icon('equalizer') ?> is to view the
-    geoloc report. <?= Html::icon('map-marker') ?> is to go to map view. <?= Html::icon('pencil') ?> is to edit the
-    session properties. <?= Html::icon('resize-full') ?> is to split the session. <?= Html::icon('trash') ?> is to
-    remove the session.
-</p>
-<p>
-    You can generate a report of multiple sessions by editing the url manually to the following:
-    <code><?= str_replace('100', '[sessionid1].[sessionid2].(etc)', Url::to(['report-coverage', 'id' => 100], true)) ?></code>.
-    The session id can be found in the left column of the table below.
-</p>
-<form class="form-inline" onsubmit="save()">
-    <div class="input-group">
-      <?= Html::dropDownList('session-set', null, $sessionSets, ['class' => 'form-control', 'prompt' => '- New session set - ', 'id' => 'session-set']) ?>
-        <div class="input-group-btn">
-            <button class="btn btn-default" onclick="save()">Put selected sessions in session set</button>
-        </div>
-    </div>
-    <div class="input-group">
-        <button class="btn btn-link" onclick="quickReport()">Quick coverage report</button>
-    </div>
-    <span id="response"></span>
-</form>
-<br/>
-<script>
+
     function getIds() {
         event.preventDefault();
         var ids = $('#grid').yiiGridView('getSelectedRows');
-        $("#response").text('');
+        $("#response span").text('');
         if (ids.length === 0) {
-            $("#response").text('No sessions selected');
+            $("#response span").text('No sessions selected');
+            $("#response").show();
             saveDone();
             return;
         }
@@ -256,6 +295,23 @@ $columns = [
         var sessionSetId = $("#session-set").val();
         url = url.replace("HERE", ids.join('.'));
         window.location = url;
+    }
+
+    function bulkDelete() {
+        var ids = getIds();
+        if (!confirm("Are you sure to delete " + ids.length + " session(s)?")) {
+            return;
+        }
+
+        $.ajax('<?= Url::to(['/sessions/bulk-delete']) ?>', {
+            type: 'POST',
+            data: {
+                ids: ids
+            },
+            complete: function() {
+                window.location.reload();
+            }
+        });
     }
 
     function save() {
@@ -274,7 +330,7 @@ $columns = [
 
     function saveDone() {
         t = setTimeout(function () {
-            $("#response").text("");
+            $("#response").hide();
         }, 2500);
         return true;
     }

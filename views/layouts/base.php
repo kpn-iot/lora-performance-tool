@@ -37,6 +37,7 @@ if (!Yii::$app->user->isGuest) {
     'items' => [
       ['label' => 'Live measurements', 'items' => [
           ['label' => 'Devices', 'url' => ['/devices']],
+          ['label' => 'Device Groups', 'url' => ['/device-groups']],
           ['label' => 'Session Sets', 'url' => ['/session-sets']],
           ['label' => 'Sessions', 'url' => ['/sessions']],
           ['label' => 'Frames', 'url' => ['/frames']],

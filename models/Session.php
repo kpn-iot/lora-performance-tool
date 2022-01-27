@@ -14,9 +14,10 @@
 
 namespace app\models;
 
-use Yii;
 use app\helpers\Html;
+use app\models\lora\BareFrameFactory;
 use app\models\lora\FrameCollection;
+use Yii;
 
 /**
  * This is the model class for table "sessions".
@@ -27,8 +28,10 @@ use app\models\lora\FrameCollection;
  * @property string $type
  * @property string $vehicle_type
  * @property string $motion_indicator
+ * @property integer $location_id
  * @property string $latitude
  * @property string $longitude
+ * @property string $location_report_source
  * @property string $created_at
  * @property string $updated_at
  * @property string $runtime
@@ -65,6 +68,7 @@ class Session extends ActiveRecord {
   static $typeOptions = ['moving' => 'Moving measurement', 'static' => 'Static measurement'];
   static $vehicleTypeOptions = ['unknown' => 'Unknown', 'no' => 'No vehicle', 'walking' => 'Walking', 'car' => 'Car', 'bike' => 'Bike', 'train' => 'Train', 'plane' => 'Plane', 'tank' => 'Tank', 'drone' => 'Drone'];
   static $motionIndicatorOptions = ['unknown' => 'Unkown', 'static' => 'Static', 'slow_moving' => 'Walking speed', 'fast_moving' => 'Vehicle speed', 'nomadic' => 'Random'];
+  static $locationReportSourceOptions = ['lora' => 'LoRa Geolocation', 'gps' => 'GPS Location'];
 
   /**
    * @inheritdoc
@@ -78,14 +82,15 @@ class Session extends ActiveRecord {
    */
   public function rules() {
     return [
-      [['device_id'], 'integer'],
-      [['description', 'latitude', 'longitude'], 'string'],
-      ['type', 'in', 'range' => array_keys(static::$typeOptions)],
-      ['vehicle_type', 'in', 'range' => array_keys(static::$vehicleTypeOptions)],
-      ['motion_indicator', 'in', 'range' => array_keys(static::$motionIndicatorOptions)],
-      [['created_at', 'updated_at'], 'safe'],
-      [['device_id'], 'exist', 'skipOnError' => true, 'targetClass' => Device::className(), 'targetAttribute' => ['device_id' => 'id']],
-      [['location_id'], 'exist', 'skipOnError' => true, 'targetClass' => Location::className(), 'targetAttribute' => ['location_id' => 'id']],
+        [['device_id'], 'integer'],
+        [['description', 'latitude', 'longitude'], 'string'],
+        ['type', 'in', 'range' => array_keys(static::$typeOptions)],
+        ['vehicle_type', 'in', 'range' => array_keys(static::$vehicleTypeOptions)],
+        ['motion_indicator', 'in', 'range' => array_keys(static::$motionIndicatorOptions)],
+        ['location_report_source', 'in', 'range' => array_keys(static::$locationReportSourceOptions)],
+        [['created_at', 'updated_at'], 'safe'],
+        [['device_id'], 'exist', 'skipOnError' => true, 'targetClass' => Device::className(), 'targetAttribute' => ['device_id' => 'id']],
+        [['location_id'], 'exist', 'skipOnError' => true, 'targetClass' => Location::className(), 'targetAttribute' => ['location_id' => 'id']],
     ];
   }
 
@@ -121,24 +126,32 @@ class Session extends ActiveRecord {
    */
   public function attributeLabels() {
     return [
-      'id' => 'ID',
-      'device_id' => 'Device ID',
-      'nrFrames' => 'Nr received frames',
-      'frr' => 'FRR',
-      'typeIcon' => 'Type',
-      'typeFull' => 'Measurement type',
-      'typeFormatted' => 'Type',
-      'location_id' => 'Location',
-      'vehicleTypeReadable' => 'Vehicle type',
-      'motionIndicatorReadable' => 'Motion indicator',
-      'countUpRange' => 'Counter range',
-      'description' => 'Description',
-      'sf' => 'SF',
-      'created_at' => 'Created At',
-      'updated_at' => 'Updated At',
-      'locSolveAccuracy' => 'LocSolve Accuracy',
-      'locSolveSuccess' => 'LocSolve Success'
+        'id' => 'ID',
+        'device_id' => 'Device ID',
+        'nrFrames' => 'Nr received frames',
+        'frr' => 'FRR',
+        'typeIcon' => 'Type',
+        'typeFull' => 'Measurement type',
+        'typeFormatted' => 'Type',
+        'location_id' => 'Location',
+        'vehicleTypeReadable' => 'Vehicle type',
+        'vehicleTypeFormatted' => 'Vehicle type',
+        'motionIndicatorReadable' => 'Motion indicator',
+        'countUpRange' => 'Counter range',
+        'location_report_source' => 'Location Report Source',
+        'description' => 'Description',
+        'sf' => 'SF',
+        'created_at' => 'Created At',
+        'updated_at' => 'Updated At',
+        'locSolveAccuracy' => 'Location Accuracy',
+        'locSolveSuccess' => 'Location Success Rate'
     ];
+  }
+
+  public function fields() {
+    $fields = parent::fields();
+    $fields['properties'] = 'properties';
+    return $fields;
   }
 
   /**
@@ -191,7 +204,7 @@ class Session extends ActiveRecord {
   }
 
   /**
-   * 
+   *
    * @return \yii\db\ActiveQuery
    */
   public function getProperties() {
@@ -224,7 +237,7 @@ class Session extends ActiveRecord {
   public function getInterval() {
     return FrameCollection::formatInterval($this->prop->interval);
   }
-  
+
   public function getAvgGwCount() {
     return $this->prop->gateway_count_average;
   }
@@ -298,7 +311,12 @@ class Session extends ActiveRecord {
 
   public function getFrameCollection() {
     if ($this->_frameCollection === null) {
-      $this->_frameCollection = new FrameCollection($this->frames);
+      $bareFrames = [];
+      $bareFrameFactory = new BareFrameFactory();
+      foreach ($this->getFrames()->each() as $frame) {
+        $bareFrames[] = $bareFrameFactory->create($frame, $this);
+      }
+      $this->_frameCollection = new FrameCollection($bareFrames);
     }
     return $this->_frameCollection;
   }
@@ -306,9 +324,12 @@ class Session extends ActiveRecord {
   public function getTypeIcon() {
     switch ($this->type) {
       case 'moving':
-        return Html::icon('globe');
+        return Html::icon('globe', ['title' => 'Moving, compare GPS and LoRa']);
       case 'static':
-        return Html::icon('pushpin');
+        if ($this->location_report_source === 'gps') {
+          return Html::icon('map-marker', ['title' => 'Static, compare GPS with static location']);
+        }
+        return Html::icon('pushpin', ['title' => 'Static, compare LoRa with static location']);
     }
   }
 
@@ -389,13 +410,13 @@ class Session extends ActiveRecord {
     if ($createOnly && $this->properties !== null) {
       return $this->properties;
     }
-    
+
     if ($refreshModel) {
       $session = Session::find()->with(['firstFrame', 'lastFrame', 'frames', 'properties', 'frames.session', 'frames.reception'])->andWhere(['id' => $this->id])->one();
     } else {
       $session = $this;
     }
-    
+
     if ($session->properties === null) {
       $properties = new SessionProperties();
       $properties->session_id = $this->id;
@@ -407,12 +428,13 @@ class Session extends ActiveRecord {
       $session->delete();
       return null;
     }
+
     $properties->frame_counter_first = $session->firstFrame->count_up;
     $properties->frame_counter_last = $session->lastFrame->count_up;
     $properties->session_date_at = gmdate("Y-m-d H:i:s", (($session->lastFrame->timestamp - $session->firstFrame->timestamp) / 2) + $session->firstFrame->timestamp);
     $properties->first_frame_at = gmdate("Y-m-d H:i:s", $session->firstFrame->timestamp);
     $properties->last_frame_at = gmdate("Y-m-d H:i:s", $session->lastFrame->timestamp);
-    $properties->nr_frames = $session->getFrames()->count();
+    $properties->nr_frames = $session->frameCollection->nrFrames;
     $properties->frame_reception_ratio = round(100 * $properties->nr_frames / ($session->lastFrame->count_up - $session->firstFrame->count_up + 1), 2);
     $properties->gateway_count_average = $session->frameCollection->coverage->avgGwCount;
     $properties->rssi_average = $session->frameCollection->coverage->avgRssi;
@@ -426,6 +448,9 @@ class Session extends ActiveRecord {
     $properties->geoloc_accuracy_average = $session->frameCollection->geoloc->average;
     $properties->geoloc_accuracy_90perc = $session->frameCollection->geoloc->perc90point;
     $properties->geoloc_accuracy_2d_distance = $session->frameCollection->geoloc->average2D['distance'];
+    if ($properties->geoloc_accuracy_2d_distance > 1000) {
+      $properties->geoloc_accuracy_2d_distance = 1000;
+    }
     $properties->geoloc_accuracy_2d_direction = $session->frameCollection->geoloc->average2D['direction'];
     $properties->geoloc_success_rate = $session->frameCollection->geoloc->percentageNrLocalisations * 100;
     if (!$properties->save()) {

@@ -30,7 +30,7 @@ $this->title = 'Map';
       <br />
       <div class="container-fluid">
         <a ng-href='{{baseUrl}}session/coverage/{{sessionId}}' class='btn btn-link'><span class='glyphicon glyphicon-stats'></span> Coverage report</a>
-        <a ng-href='{{baseUrl}}session/geoloc/{{sessionId}}' class='btn btn-link'><span class='glyphicon glyphicon-equalizer'></span> Geoloc report</a>
+        <a ng-href='{{baseUrl}}session/geoloc/{{sessionId}}' class='btn btn-link'><span class='glyphicon glyphicon-equalizer'></span> Location report</a>
         <div class='pull-right'>
           <button class="btn btn-sm btn-default" ng-click="viewConfig.showGateways = !viewConfig.showGateways">{{(viewConfig.showGateways) ? 'Hide gateways' : 'Show gateways'}}</button>
         </div>
@@ -76,6 +76,8 @@ $this->title = 'Map';
               </td>
               <td>
                 <span ng-show="item.location_diff_lora">{{item.location_diff_lora|number:1}}m</span>
+                <br ng-show="item.location_diff_lora && item.location_radius_lora"/>
+                <small ng-show="item.location_radius_lora">(theoretical: {{item.location_radius_lora|number:1}}m)</small>
               </td>
               <td ng-class="{'success': (item.location_age_lora < 10 && item.location_age_lora !== null)}">
                 <span ng-hide="item.location_age_lora == null">{{item.location_age_lora}}s</span>
@@ -92,7 +94,7 @@ $this->title = 'Map';
       </div>
     </div>
     <div class="col-md-7 col-sm-12">
-      <leaflet id="map" event-broadcast="leaflet.events" defaults="leaflet.defaults" lf-center="leaflet.center" bounds="leaflet.bounds" paths="leaflet.paths" markers="leaflet.markers"></leaflet>
+      <leaflet id="map" event-broadcast="leaflet.events" defaults="leaflet.defaults" lf-center="leaflet.center" bounds="leaflet.bounds" paths="leaflet.paths" markers="leaflet.markers" tiles="leaflet.tiles"></leaflet>
     </div>
   </div>
 </main>

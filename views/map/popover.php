@@ -50,7 +50,7 @@ if (class_exists('yii\debug\Module')) {
             };
       </script>
 
-      <leaflet id="map" defaults="leaflet.defaults" lf-center="leaflet.center" bounds="leaflet.bounds" paths="leaflet.paths"></leaflet>
+      <leaflet id="map" defaults="leaflet.defaults" lf-center="leaflet.center" bounds="leaflet.bounds" paths="leaflet.paths" markers="leaflet.markers"></leaflet>
     </div>
 
     <?php $this->endBody() ?>

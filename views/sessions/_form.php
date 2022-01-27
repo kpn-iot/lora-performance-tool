@@ -32,7 +32,9 @@ foreach ($locationsRaw as $loc) {
   <?= $form->field($model, 'description')->textarea(['rows' => 6]) ?>
 
   <?= $form->field($model, 'type')->dropDownList($model::$typeOptions) ?>
-  
+
+  <?= $form->field($model, 'location_report_source')->dropDownList($model::$locationReportSourceOptions) ?>
+
   <?= $form->field($model, 'location_id')->dropDownList($locations, ['prompt' => 'Manual location']) ?>
 
   <div class="row" id="session-coordinates">
@@ -59,6 +61,7 @@ foreach ($locationsRaw as $loc) {
     $(document).ready(intfs);
     function intfs() {
       $(".field-session-location_id").css("display", ($("#session-type").val() == 'static') ? 'block' : 'none');
+      $(".field-session-location_report_source").css("display", ($("#session-type").val() == 'static') ? 'block' : 'none');
       $("#session-coordinates").css("display", ($("#session-type").val() == 'static' && $("#session-location_id").val() == '') ? 'block' : 'none');
     }
     ;

@@ -15,7 +15,9 @@
 namespace app\models;
 
 use app\components\data\Decoding;
+use app\helpers\DataHelper;
 use app\helpers\Html;
+use app\models\forms\DeviceGroupGraphForm;
 
 /**
  * This is the model class for table "devices".
@@ -34,6 +36,8 @@ use app\helpers\Html;
  * @property bool $autosplit
  * @property string $autosplitFormatted
  *
+ * @property DeviceGroupLink[] $deviceGroupLinks
+ * @property DeviceGroup[] $groups
  * @property Session[] $sessions
  */
 class Device extends ActiveRecord {
@@ -50,16 +54,16 @@ class Device extends ActiveRecord {
    */
   public function rules() {
     return [
-      [['name', 'device_eui', 'port_id'], 'required'],
-      [['port_id'], 'integer'],
-      [['description'], 'string'],
-      [['created_at', 'updated_at'], 'safe'],
-      [['name', 'as_id'], 'string', 'max' => 100],
-      [['device_eui'], 'string', 'max' => 16],
-      [['payload_type'], 'string', 'max' => 30],
-      [['lrc_as_key'], 'string', 'max' => 32],
-      [['autosplit'], 'boolean'],
-      [['device_eui', 'port_id'], 'unique', 'targetAttribute' => ['device_eui', 'port_id'], 'message' => 'The combination of Device Eui and Port ID has already been taken.'],
+        [['name', 'device_eui', 'port_id'], 'required'],
+        [['port_id'], 'integer'],
+        [['description'], 'string'],
+        [['created_at', 'updated_at'], 'safe'],
+        [['name', 'as_id'], 'string', 'max' => 100],
+        [['device_eui'], 'string', 'max' => 16],
+        [['payload_type'], 'string', 'max' => 30],
+        [['lrc_as_key'], 'string', 'max' => 32],
+        [['autosplit'], 'boolean'],
+        [['device_eui', 'port_id'], 'unique', 'targetAttribute' => ['device_eui', 'port_id'], 'message' => 'The combination of Device Eui and Port ID has already been taken.'],
     ];
   }
 
@@ -68,18 +72,18 @@ class Device extends ActiveRecord {
    */
   public function attributeLabels() {
     return [
-      'id' => 'ID',
-      'name' => 'Name',
-      'device_eui' => 'DevEUI',
-      'port_id' => 'Application port',
-      'payload_type' => 'Payload Type',
-      'payloadTypeReadable' => 'Payload type',
-      'as_id' => 'AS-ID',
-      'lrc_as_key' => 'LRC-AS Key',
-      'description' => 'Description',
-      'autosplitFormatted' => 'Autosplit',
-      'created_at' => 'Created At',
-      'updated_at' => 'Updated At',
+        'id' => 'ID',
+        'name' => 'Name',
+        'device_eui' => 'DevEUI',
+        'port_id' => 'Application port',
+        'payload_type' => 'Payload Type',
+        'payloadTypeReadable' => 'Payload type',
+        'as_id' => 'AS-ID',
+        'lrc_as_key' => 'LRC-AS Key',
+        'description' => 'Description',
+        'autosplitFormatted' => 'Autosplit',
+        'created_at' => 'Created At',
+        'updated_at' => 'Updated At',
     ];
   }
 
@@ -123,4 +127,47 @@ class Device extends ActiveRecord {
     return ($this->autosplit) ? Html::icon('ok', ['class' => 'text-success']) : Html::icon('remove', ['class' => 'text-danger']);
   }
 
+  /**
+   * Gets query for [[DeviceGroupLinks]].
+   *
+   * @return \yii\db\ActiveQuery
+   */
+  public function getDeviceGroupLinks() {
+    return $this->hasMany(DeviceGroupLink::className(), ['device_id' => 'id']);
+  }
+
+  /**
+   * Gets query for [[Groups]].
+   *
+   * @return \yii\db\ActiveQuery
+   */
+  public function getGroups() {
+    return $this->hasMany(DeviceGroup::className(), ['id' => 'group_id'])->viaTable('device_group_links', ['device_id' => 'id']);
+  }
+
+  /**
+   * @param DeviceGroupGraphForm $formModel
+   * @return null|array
+   * @throws \yii\db\Exception
+   */
+  public function getAccuracyHistogramData(DeviceGroupGraphForm $formModel) {
+    if (!$formModel->validate()) {
+      return null;
+    }
+
+    return DataHelper::getAccuracyHistogramData('device', $this->id, $formModel);
+  }
+
+  /**
+   * @param DeviceGroupGraphForm $formModel
+   * @return null|array
+   * @throws \yii\db\Exception
+   */
+  public function getDailyStatsData(DeviceGroupGraphForm $formModel) {
+    if (!$formModel->validate()) {
+      return null;
+    }
+
+    return DataHelper::getDailyStatsData('device', $this->id, $formModel);
+  }
 }

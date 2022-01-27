@@ -172,8 +172,13 @@ class Quick extends ActiveRecord {
         'longitude_lora' => null,
         'location_time_lora' => null,
         'location_age_lora' => null,
+        'location_algorithm_lora' => null,
         'location_radius_lora' => null,
+        'isValidSolve' => false,
+        'couldHaveValidSolve' => true,
         'distance' => null,
+        'bearing' => null,
+        'bearingArrow' => null,
         'time' => $data[2],
         'created_at' => $data[1],
         'timestamp' => strtotime($data[2])
@@ -209,9 +214,14 @@ class Quick extends ActiveRecord {
         $frame['location_age_lora'] = strtotime($frame['created_at']) - strtotime($frame['location_time_lora']);
 
         if ($frame['latitude'] != null && $frame['longitude'] != null && $frame['latitude_lora'] != null && $frame['longitude_lora'] != null) {
-          $frame['distance'] = Calc::coordinateDistance($frame['latitude'], $frame['longitude'], $frame['latitude_lora'], $frame['longitude_lora']);
-          $frame['bearing'] = Calc::coordinateBearing($frame['latitude'], $frame['longitude'], $frame['latitude_lora'], $frame['longitude_lora']);
-          $frame['bearingArrow'] = Frame::formatBearingArrow($frame['bearing']);
+          $frame['isValidSolve'] = true;
+          if ($frame['latitude'] === $frame['latitude_lora'] && $frame['longitude'] === $frame['longitude_lora']) {
+            $frame['distance'] = 0;
+          } else {
+            $frame['distance'] = Calc::coordinateDistance($frame['latitude'], $frame['longitude'], $frame['latitude_lora'], $frame['longitude_lora']);
+            $frame['bearing'] = Calc::coordinateBearing($frame['latitude'], $frame['longitude'], $frame['latitude_lora'], $frame['longitude_lora']);
+            $frame['bearingArrow'] = Frame::formatBearingArrow($frame['bearing']);
+          }
         }
       }
 

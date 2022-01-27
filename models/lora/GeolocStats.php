@@ -15,7 +15,6 @@
 namespace app\models\lora;
 
 use app\models\Frame;
-use app\helpers\Calc;
 
 /**
  * @property integer $average
@@ -27,7 +26,7 @@ use app\helpers\Calc;
  * @property array $cdf
  * @property array $timeGraphs
  * @property integer $perc90point
- * @property interger $median
+ * @property integer $median
  * @property array $perGatewayCount
  */
 class GeolocStats extends \yii\base\BaseObject {
@@ -53,15 +52,19 @@ class GeolocStats extends \yii\base\BaseObject {
     }
 
     foreach ($frameCollection->frames as $frame) {
-      if ($frame['location_age_lora'] !== null && $frame['location_age_lora'] < Frame::$locationAgeThreshold) { // new localisation
+      if ($frame['isValidSolve']) { // new localisation
         $localisationCount += 1;
 
-        $this->_perGatewayCount[$frame['gateway_count']]['count'] += 1;
-        $this->_perGatewayCount[$frame['gateway_count']]['locsolves'] += 1;
-      } elseif ($frame['latitude_lora'] !== null && $frame['longitude_lora'] !== null) { // contains lora location values, not new
+        if (isset($this->_perGatewayCount[$frame['gateway_count']])) {
+          $this->_perGatewayCount[$frame['gateway_count']]['count'] += 1;
+          $this->_perGatewayCount[$frame['gateway_count']]['locsolves'] += 1;
+        }
+      } elseif ($frame['couldHaveValidSolve']) { // contains lora location values, not new
         $noNewLocalisationCount += 1;
 
-        $this->_perGatewayCount[$frame['gateway_count']]['count'] += 1;
+        if (isset($this->_perGatewayCount[$frame['gateway_count']])) {
+          $this->_perGatewayCount[$frame['gateway_count']]['count'] += 1;
+        }
         continue;
       } else { // no lora location values
         continue;
@@ -79,13 +82,13 @@ class GeolocStats extends \yii\base\BaseObject {
       $dist = $frame['distance'];
       $bearing = $frame['bearing'];
 
-	  if (!is_nan($bearing)) {
+      if (!is_nan($bearing)) {
         $latDiff = $dist * cos(deg2rad($bearing));
         $lonDiff = $dist * sin(deg2rad($bearing));
 
         $measurementLatSum += $latDiff;
         $measurementLonSum += $lonDiff;
-	  }
+      }
 
       $measurementSum += $dist;
     }
@@ -103,11 +106,11 @@ class GeolocStats extends \yii\base\BaseObject {
     $measurementLonSum /= $measurementCount;
 
     $this->_average2D = [
-      'distance' => sqrt(pow($measurementLatSum, 2) + pow($measurementLonSum, 2)),
-      'direction' => (360 + rad2deg(atan2($measurementLonSum, $measurementLatSum))) % 360
+        'distance' => sqrt(pow($measurementLatSum, 2) + pow($measurementLonSum, 2)),
+        'direction' => (360 + rad2deg(atan2($measurementLonSum, $measurementLatSum))) % 360
     ];
 
-    usort($this->_measurementFrames, function($a, $b) {
+    usort($this->_measurementFrames, function ($a, $b) {
       return $a['distance'] > $b['distance'];
     });
 
@@ -138,8 +141,8 @@ class GeolocStats extends \yii\base\BaseObject {
         $colSkip += 1;
       }
       $this->_timeGraphs = [
-        'columns' => $columns,
-        'lines' => $lines
+          'columns' => $columns,
+          'lines' => $lines
       ];
     }
     return $this->_timeGraphs;
@@ -214,27 +217,27 @@ class GeolocStats extends \yii\base\BaseObject {
       return;
     }
     $this->_cdf = [
-      ['x' => 0, 'y' => 0]
+        ['x' => 0, 'y' => 0]
     ];
     $cumsum = 0;
     foreach ($this->_measurementFrames as $frame) {
       $this->_cdf[] = [
-        'x' => round($frame['distance'], 2),
-        'y' => $cumsum
+          'x' => round($frame['distance'], 2),
+          'y' => $cumsum
       ];
 
       $cumsum += 1;
 
       $this->_cdf[] = [
-        'x' => round($frame['distance'], 2),
-        'y' => $cumsum
+          'x' => round($frame['distance'], 2),
+          'y' => $cumsum
       ];
     }
     // add an end line to the CDF graph
     $lastPoint = end($this->_cdf);
     $this->_cdf[] = [
-      'x' => $lastPoint['x'] * 1.1,
-      'y' => $lastPoint['y']
+        'x' => $lastPoint['x'] * 1.1,
+        'y' => $lastPoint['y']
     ];
 
     foreach ($this->_cdf as &$point) {

@@ -47,9 +47,9 @@ app.controller('MapController', ['$scope', '$http', 'leafletData',
         iconAnchor: [4, 4]
       },
       frameIconActive: {
-        iconUrl: $scope.baseUrl + "img/blu-circle-lv.png",
-        iconSize: [16, 16],
-        iconAnchor: [8, 8]
+        iconUrl: $scope.baseUrl + "img/grn-circle-lv.png",
+        iconSize: [12, 12],
+        iconAnchor: [6, 6]
       },
       loraLocationIcon: {
         iconUrl: $scope.baseUrl + "img/wht-diamond-lv.png",
@@ -58,8 +58,13 @@ app.controller('MapController', ['$scope', '$http', 'leafletData',
       },
       loraLocationIconActive: {
         iconUrl: $scope.baseUrl + "img/blu-diamond-lv.png",
-        iconSize: [16, 16],
-        iconAnchor: [8, 8]
+        iconSize: [12, 12],
+        iconAnchor: [6, 6]
+      },
+      staticIcon: {
+        iconUrl: $scope.baseUrl + "img/pin-red.png",
+        iconSize: [20, 34],
+        iconAnchor: [10, 34]
       },
       gpsTrackStroke: {color: 'rgba(0,150,0,0.6)', weight: 3},
       loraTrackStroke: {color: 'rgba(255,0,0,0.6)', weight: 2}
@@ -70,6 +75,10 @@ app.controller('MapController', ['$scope', '$http', 'leafletData',
         lat: 51.968256,
         lng: 4.362128,
         zoom: 12
+      },
+      tiles: {
+        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        // url: "https://{s}.tile.openstreetmap.se/hydda/base/{z}/{x}/{y}.png"
       },
       defaults: {
         maxZoom: 17
@@ -111,14 +120,14 @@ app.controller('MapController', ['$scope', '$http', 'leafletData',
     $http({
       url: $scope.baseUrl + 'map/gateways'
     }).then(function (response) {
+      $scope.data.gateways = [];
       angular.forEach(response.data, function (record, index) {
         record.latitude = parseFloat(record.latitude);
         record.longitude = parseFloat(record.longitude);
-        if (isNaN(record.latitude) || isNaN(record.longitude)) {
-          response.data.splice(index, 1);
+        if (!isNaN(record.latitude) && !isNaN(record.longitude)) {
+          $scope.data.gateways.push(record);
         }
       });
-      $scope.data.gateways = response.data;
     });
 
     if ($scope.sessionId != '') {
@@ -127,6 +136,7 @@ app.controller('MapController', ['$scope', '$http', 'leafletData',
           url: $scope.baseUrl + 'map/frames?session_id=' + $scope.sessionId
         }).then(function (response) {
           $scope.data.frames = response.data.frames;
+          $scope.data.staticPointers = response.data.staticPointers;
           $scope.name = response.data.name;
           drawMap();
         });
@@ -167,16 +177,32 @@ app.controller('MapController', ['$scope', '$http', 'leafletData',
     $scope.activeFrameId = null;
     $scope.select = function (frameI) {
       var deselect = ($scope.activeFrameId === frameI);
+      var foundLoRaMarker = false;
+
       angular.forEach($scope.leaflet.markers, function (marker, markerId) {
-        if (markerId === "frame" + $scope.activeFrameId) {
+        if (markerId === "frame" + $scope.activeFrameId) { //unhighlight current selected marker
           marker.icon = marker.baseIcon;
-        } else if (!deselect && markerId === "frame" + frameI) {
+        } else if (!deselect && markerId === "frame" + frameI) { //highlight gps loc
           marker.icon = $scope.viewConfig.frameIconActive;
-        } else if (markerId === "lora" + $scope.activeFrameId) {
+        } else if (markerId === "lora" + $scope.activeFrameId) { //unhighlight current selected lora marker
           marker.icon = $scope.viewConfig.loraLocationIcon;
-        } else if (!deselect && markerId === "lora" + frameI) {
-          marker.icon = $scope.viewConfig.loraLocationIconActive;
-        } else if (marker.type === "gateway") {
+        } else if (!deselect && markerId === "lora" + frameI) { //highlight lora geoloc
+		  marker.icon = $scope.viewConfig.loraLocationIconActive;
+          if (marker.radius !== null) {
+            $scope.leaflet.paths.circle = {
+              type: "circle",
+              fill: true,
+              fillOpacity: 0.05,
+              weight: 1,
+              radius: marker.radius,
+              latlngs: {
+                lat: marker.lat,
+                lng: marker.lng
+              }
+            };
+            foundLoRaMarker = true;
+          }
+        } else if (marker.type === "gateway") { //highlight receiving gateways
           if (marker.icon !== $scope.viewConfig.gatewayIcon) {
             marker.icon = $scope.viewConfig.gatewayIcon;
           } else if (!deselect && $scope.data.frames[frameI].reception.indexOf(marker.name) > -1) {
@@ -184,6 +210,10 @@ app.controller('MapController', ['$scope', '$http', 'leafletData',
           }
         }
       });
+
+      if (!foundLoRaMarker || deselect) {
+        delete($scope.leaflet.paths.circle);
+      }
 
       $scope.activeFrameId = (deselect) ? null : frameI;
     };
@@ -241,6 +271,16 @@ app.controller('MapController', ['$scope', '$http', 'leafletData',
       var gpsLatlngs = [];
       var loraLatlngs = [];
 
+
+      angular.forEach($scope.data.staticPointers, function (pointer) {
+        $scope.leaflet.markers["static" + pointer.sessionId] = {
+          lat: parseFloat(pointer.latitude),
+          lng: parseFloat(pointer.longitude),
+          icon: $scope.viewConfig.staticIcon
+        };
+        calculateBounds($scope.leaflet.markers["static" + pointer.sessionId]);
+      });
+
       if ($scope.data.frames === undefined) {
         return;
       }
@@ -269,7 +309,8 @@ app.controller('MapController', ['$scope', '$http', 'leafletData',
         if (frame.latitude_lora != null && frame.location_age_lora < 10) {
           var loraCoordinates = {
             lat: parseFloat(frame.latitude_lora),
-            lng: parseFloat(frame.longitude_lora)
+            lng: parseFloat(frame.longitude_lora),
+            radius: (frame.location_radius_lora === null) ? null : parseFloat(frame.location_radius_lora)
           };
           calculateBounds(loraCoordinates);
 
@@ -286,6 +327,7 @@ app.controller('MapController', ['$scope', '$http', 'leafletData',
             $scope.leaflet.markers["lora" + frameI] = {
               lat: loraCoordinates.lat,
               lng: loraCoordinates.lng,
+              radius: loraCoordinates.radius,
               icon: $scope.viewConfig.loraLocationIcon
             };
           }

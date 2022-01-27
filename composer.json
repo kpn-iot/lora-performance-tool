@@ -1,6 +1,6 @@
 {
 	"name" : "kpn-iot/performance-tool",
-	"description" : "Performance Tool",
+	"description" : "LoRa Performance Tool",
 	"type" : "project",
 	"license" : "GPL-3.0",
 	"support" : {},
@@ -12,38 +12,60 @@
 		"yiisoft/yii2-swiftmailer" : "*",
 		"dmstr/yii2-migrate-command" : "^0.3.1",
 		"components/font-awesome" : "^4.7",
-		"kartik-v/yii2-widget-select2" : "@dev",
-		"phpoffice/phpword": "^0.15.0"
-	},
+		"kartik-v/yii2-widget-select2" : "^2.2",
+		"phpoffice/phpword": "^0.15.0",
+		"bower-asset/angular-google-chart": "^0.1.0",
+		"bower-asset/ngstorage": "^0.3.11",
+		"bower-asset/angular": "^1.5.8",
+		"bower-asset/socket.io-client": "^1.7.2",
+		"bower-asset/angular-socket-io": "^0.7.0",
+		"bower-asset/ui-leaflet": "^2.0",
+		"ext-json": "*"
+    },
 	"require-dev" : {
 		"yiisoft/yii2-codeception" : "*",
 		"yiisoft/yii2-debug" : "*",
 		"yiisoft/yii2-gii" : "*",
 		"yiisoft/yii2-faker" : "*"
 	},
-	"config" : {
-		"process-timeout" : 1800
-	},
-	"scripts" : {
-		"post-create-project-cmd" : "yii\\composer\\Installer::postCreateProject"
-	},
-	"extra" : {
-		"yii\\composer\\Installer::postCreateProject" : {
-			"setPermission" : [{
-					"runtime" : "0777",
-					"web/assets" : "0777",
-					"yii" : "0755"
-				}
-			],
-			"generateCookieValidationKey" : [
-				"config/web.php"
-			]
-		},
-		"asset-installer-paths" : {
-			"npm-asset-library" : "vendor/npm",
-			"bower-asset-library" : "vendor/bower"
+	"config": {
+		"process-timeout": 1800,
+		"fxp-asset": {
+			"enabled": false
 		}
 	},
+	"scripts": {
+		"post-install-cmd": [
+			"yii\\composer\\Installer::postInstall"
+		],
+		"post-create-project-cmd": [
+			"yii\\composer\\Installer::postCreateProject",
+			"yii\\composer\\Installer::postInstall"
+		]
+	},
+	"extra": {
+		"yii\\composer\\Installer::postCreateProject": {
+			"setPermission": [
+				{
+					"runtime": "0777",
+					"web/assets": "0777",
+					"files/usm": "0777",
+					"yii": "0755"
+				}
+			]
+		},
+		"yii\\composer\\Installer::postInstall": {
+			"generateCookieValidationKey": [
+				"config/web.php"
+			]
+		}
+	},
+	"repositories": [
+		{
+			"type": "composer",
+			"url": "https://asset-packagist.org"
+		}
+	],
 	"authors" : [{
 			"name" : "Paul Marcelis",
 			"email" : "paul.marcelis@kpn.com"

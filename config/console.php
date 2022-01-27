@@ -24,7 +24,14 @@ return [
   'controllerNamespace' => 'app\commands',
   'modules' => [
     'gii' => 'yii\gii\Module',
+    'rest' => [
+      'class' => 'app\modules\rest\Module',
+    ],
   ],
+    'aliases' => [
+        '@bower' => '@vendor/bower-asset',
+        '@npm' => '@vendor/npm-asset',
+    ],
   'components' => [
     'cache' => [
       'class' => 'yii\caching\FileCache',

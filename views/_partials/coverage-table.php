@@ -56,8 +56,7 @@ $gatewayColors = $frameCollection->coverage->gwColors;
         <?php endif ?>
 
         <?php
-        $rowspan = "rowspan='" . count($frame['reception']) . "'";
-        ?>
+        $rowspan = "rowspan='" . max(1, count($frame['reception'])) . "'";        ?>
         <tr>
           <?php if ($withDeviceEui): ?>
             <td <?= $rowspan ?>><?= $frame['device_eui'] ?></td>

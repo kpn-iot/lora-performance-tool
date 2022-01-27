@@ -17,7 +17,7 @@ use yii\widgets\DetailView;
 /* @var $this yii\web\View */
 /* @var $model app\models\SessionSet */
 
-$this->title = $model->name . ' <small>Geoloc report</small>';
+$this->title = $model->name . ' <small>Location report</small>';
 $this->params['breadcrumbs'][] = ['label' => 'Session Sets', 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->name, 'url' => ['view', 'id' => $model->id]];
 $this->params['breadcrumbs'][] = 'Coverage report';

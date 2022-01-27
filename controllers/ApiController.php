@@ -21,7 +21,10 @@ use app\models\Device;
 use app\models\DeviceLocation;
 use app\models\Frame;
 use app\models\ReceptionRaw;
+use app\components\LiveFeed;
+use app\models\senml\SenMLPack;
 use Yii;
+use yii\db\Expression;
 use yii\web\Controller;
 use yii\web\HttpException;
 use yii\web\Response;
@@ -38,9 +41,87 @@ class ApiController extends Controller {
     return parent::beforeAction($action);
   }
 
-  private static function error($code, $message, $logPayload = true) {
-    ApiLog::log($message, $logPayload);
+  private static function error($code, $message = null, $logPayload = true) {
+    if ($message !== null) {
+      ApiLog::log($message, $logPayload);
+    }
     throw new HttpException($code, $message);
+  }
+
+  public function actionSenml() {
+    // check POST
+    if (!Yii::$app->request->isPost) {
+      static::error(405, 'Only POST method allowed.');
+    }
+
+    $plugId = Yii::$app->request->headers->get("Things-Plug-UUID");
+    $checkToken = Yii::$app->request->headers->get("Things-Message-Token");
+
+    $body = Yii::$app->request->rawBody;
+
+    try {
+        $senMLPack = new SenMLPack($body);
+    } catch (\Exception $e) {
+        static::error(400, $e->getMessage());
+    }
+
+    /** @var Device $device */
+    $device = Device::find()->andWhere(['device_eui' => $senMLPack->devEUI])->one();
+    if ($device == null) {
+      static::error(400, 'Device with ID ' . $senMLPack->devEUI . ' unknown');
+    }
+
+    // check Token
+    if ($device->lrc_as_key != null) {
+      $tokenData = $body.$device->lrc_as_key;
+      $calcToken = hash('sha256', $tokenData);
+      if ($checkToken !== $calcToken) {
+        static::error(400, "Incorrect Things-Message-Token");
+      }
+    }
+
+    if ($senMLPack->getMeasurement("counter") === null) {
+      static::error(400, "Measurement with n='counter' is required!");
+    }
+
+    $formattedTime = Yii::$app->formatter->asDatetime($senMLPack->baseTime, "php:Y-m-d\TH:i:s.000P");
+
+    // insert into DB
+    $newFrame = new Frame();
+    $newFrame->count_up = $senMLPack->getMeasurement("counter");
+    $newFrame->payload_hex = null;
+    $newFrame->information = $senMLPack->raw;
+
+    if ($senMLPack->getMeasurement("latitude") !== null && $senMLPack->getMeasurement("longitude") !== null) {
+      $newFrame->latitude = (string) $senMLPack->getMeasurement("latitude");
+      $newFrame->longitude = (string) $senMLPack->getMeasurement("longitude");
+    } else {
+      $newFrame->latitude = null;
+      $newFrame->longitude = null;
+    }
+
+    $newFrame->gateway_count = $senMLPack->getMeasurement("gatewayCount");
+    $newFrame->channel = $senMLPack->getMeasurement("channel");
+    $newFrame->sf = $senMLPack->getMeasurement("sf");
+    $newFrame->location_radius_lora = $senMLPack->getMeasurement("locationRadius");
+    $newFrame->time = $formattedTime;
+
+    $previousFrameGeoloc = null;
+
+    $rawReceptions = [];
+    if ($senMLPack->getMeasurement("rssi") !== null || $senMLPack->getMeasurement("snr") !== null || $senMLPack->getMeasurement("esp") !== null) {
+      $newRawReception = new ReceptionRaw();
+      $newRawReception->lrrId = "LTE";
+      $newRawReception->rssi = ($senMLPack->getMeasurement("rssi") === null) ? null : $senMLPack->getMeasurement("rssi");
+      $newRawReception->snr = ($senMLPack->getMeasurement("snr") === null) ? null : $senMLPack->getMeasurement("snr");
+      $newRawReception->esp = ($senMLPack->getMeasurement("esp") === null) ? null : $senMLPack->getMeasurement("esp");
+      $rawReceptions[] = $newRawReception;
+    }
+
+    Ingestion::frame($newFrame, $device, $previousFrameGeoloc, $rawReceptions);
+
+    Yii::$app->response->statusCode = 201;
+    return;
   }
 
   public function actionThingpark() {
@@ -88,7 +169,15 @@ class ApiController extends Controller {
     // check Device
     $device = Device::find()->andWhere(['device_eui' => $in->DevEUI, 'port_id' => $in->FPort])->one();
     if ($device == null) {
-      static::error(404, 'Device unknown.');
+      $key = "device-unknown-" . $in->DevEUI;
+      $isLogged = \Yii::$app->cache->get($key);
+
+      if ($isLogged === false) {
+        \Yii::$app->cache->set($key, true, 60 * 60 * 24);
+        static::error(404, 'Device unknown.', false);
+      } else {
+        static::error(404, null);
+      }
     }
 
     // check Token
@@ -145,6 +234,47 @@ class ApiController extends Controller {
 
     Ingestion::frame($newFrame, $device, $previousFrameGeoloc, $rawReceptions);
     return "OK";
+  }
+
+  private function _thingparkGeoLocFrameIn($in) {
+    $devEUI = (string) $in->DevEUI;
+    $fCntUp = (string) $in->DevUlFCntUpUsed;
+
+    // to make sure a geoloc frame arrives later than a uplink frame
+    sleep(2);
+
+    $loraLocation = new DeviceLocation();
+    $loraLocation->latitude = (string) $in->DevLAT;
+    $loraLocation->longitude = (string) $in->DevLON;
+    $loraLocation->time = strtotime($in->DevLocTime);
+    $loraLocation->radius = (string) $in->DevLocRadius;
+
+    $algo = (string) $in->NwGeolocAlgo;
+    $algorithmTranslation = ["0" => "tdoa", "1" => "rssi", "2" => "both"];
+    $loraLocation->algorithm = (isset($algorithmTranslation[$algo])) ? $algorithmTranslation[$algo] : $algo;
+
+    try {
+      // check Device
+      $device = Device::find()->andWhere(['device_eui' => $in->DevEUI])->one();
+      if ($device === null) {
+        return;
+      }
+    } catch (\Exception $e) {
+      static::error(400, $e->getMessage());
+    }
+
+    $frame = Frame::find()->joinWith('device')
+        ->where(['device_eui' => $devEUI, 'count_up' => $fCntUp])
+        ->andWhere(new Expression("frames.created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 MINUTE)"))->one();
+    if ($frame !== null) {
+      $frame->saveLoRaLocation($loraLocation);
+    } else {
+      ApiLog::log("Could not find frame for geoloc, deveui={$devEUI}, fcntup={$fCntUp}", false);
+    }
+
+    $array = json_decode(json_encode($in), true);
+    $array['type'] = 'location';
+    LiveFeed::data($array);
   }
 
 }

@@ -36,7 +36,7 @@ $this->params['breadcrumbs'][] = $this->title;
     ])
     ?>
     <?= Html::a(Html::icon('stats') . ' Coverage report', ['report-coverage', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
-    <?= Html::a(Html::icon('equalizer') . ' Geoloc report', ['report-geoloc', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
+    <?= Html::a(Html::icon('equalizer') . ' Location report', ['report-geoloc', 'id' => $model->id], ['class' => 'btn btn-link hidden-print']) ?>
 
   </p>
 

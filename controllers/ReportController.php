@@ -55,7 +55,7 @@ class ReportController extends Controller {
     }, $deviceSearchModel->filter(Yii::$app->request->queryParams)->select(['id'])->asArray()->all());
 
     $sessionSearchModel = new SessionSearch();
-    $sessionRecords = $sessionSearchModel->filter(Yii::$app->request->queryParams, $deviceIds)->select(['id', 'type', 'latitude', 'longitude'])->asArray()->all();
+    $sessionRecords = $sessionSearchModel->filter(Yii::$app->request->queryParams, $deviceIds)->select(['id', 'location_report_source', 'type', 'latitude', 'longitude'])->asArray()->all();
     $sessions = [];
     $sessionIds = [];
     foreach ($sessionRecords as $session) {

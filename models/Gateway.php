@@ -41,7 +41,7 @@ class Gateway extends ActiveRecord {
    */
   public function rules() {
     return [
-      [['lrr_id'], 'string', 'max' => 8],
+      [['lrr_id'], 'string', 'max' => 50],
       [['latitude', 'longitude'], 'string', 'max' => 15],
       [['type'], 'in', 'range' => array_keys(static::$typeOptions)]
     ];

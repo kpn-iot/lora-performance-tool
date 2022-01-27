@@ -21,10 +21,22 @@ $config = [
   'timeZone' => 'Europe/Amsterdam',
   'language' => 'en',
   'bootstrap' => ['log'],
+  'aliases' => [
+    '@bower' => '@vendor/bower-asset',
+    '@npm' => '@vendor/npm-asset',
+  ],
+  'modules' => [
+    'rest' => [
+      'class' => 'app\modules\rest\Module',
+    ],
+  ],
   'components' => [
     'request' => [
       // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
       'cookieValidationKey' => '',
+      'parsers' => [
+        'application/json' => 'yii\web\JsonParser',
+      ],
     ],
     'cache' => [
       'class' => 'yii\caching\FileCache',
@@ -69,7 +81,12 @@ $config = [
         'set/<id:\d+>' => 'session-sets/view',
         'set/update/<id:\d+>' => 'session-sets/update',
         'set/coverage/<id:\d+>' => 'session-sets/report-coverage',
-        'set/geoloc/<id:\d+>' => 'session-sets/report-geoloc'
+        'set/geoloc/<id:\d+>' => 'session-sets/report-geoloc',
+        'rest/accuracy-histogram' => 'rest/default/accuracy-histogram',
+        'rest/daily-stats' => 'rest/default/daily-stats',
+        ['class' => 'yii\rest\UrlRule', 'controller' => 'rest/frame'],
+        ['class' => 'yii\rest\UrlRule', 'controller' => 'rest/session'],
+        ['class' => 'yii\rest\UrlRule', 'controller' => 'rest/device'],
       ]
     ],
     'db' => require(__DIR__ . '/db.php'),
